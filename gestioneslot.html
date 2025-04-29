@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestione Slot</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:;base64,=">
 </head>
 <body>
 
@@ -43,6 +44,45 @@
     </table>
   </div>
 
-  <script type="module" src="gestione.js"></script>
+  <!-- Script Inline -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Dropdown Menù
+      const menuBtn     = document.querySelector('.dropdown-button');
+      const menuContent = document.querySelector('.dropdown-content');
+      if (menuBtn && menuContent) {
+        menuBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          menuContent.style.display =
+            menuContent.style.display === 'block' ? 'none' : 'block';
+        });
+        document.addEventListener('click', e => {
+          if (!menuBtn.contains(e.target)) {
+            menuContent.style.display = 'none';
+          }
+        });
+      }
+
+      // Logout MenuItem
+      const logoutMenuItem = document.getElementById('logoutMenuItem');
+      if (logoutMenuItem) {
+        logoutMenuItem.addEventListener('click', e => {
+          e.preventDefault();
+          // TODO: implementa logout e redirect alla homepage
+        });
+      }
+
+      // Navigazione mesi calendario
+      const prevBtn = document.getElementById('prevMonth');
+      const nextBtn = document.getElementById('nextMonth');
+      if (prevBtn) prevBtn.addEventListener('click', () => {
+        // TODO: mostra mese precedente
+      });
+      if (nextBtn) nextBtn.addEventListener('click', () => {
+        // TODO: mostra mese successivo
+      });
+    });
+  </script>
+
 </body>
 </html>
