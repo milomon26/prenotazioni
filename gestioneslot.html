@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestione Slot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Menù -->
+  <nav>
+    <div class="dropdown">
+      <button class="dropdown-button">Menù</button>
+      <div class="dropdown-content">
+        <a href="#" id="logoutMenuItem">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Calendario -->
+  <div class="calendar-container">
+    <div class="calendar-nav">
+      <button id="prevMonth">&lt;</button>
+      <span id="monthYear"></span>
+      <button id="nextMonth">&gt;</button>
+    </div>
+    <table class="calendar">
+      <thead>
+        <tr>
+          <th><span class="day-number"></span>Lunedì</th>
+          <th><span class="day-number"></span>Martedì</th>
+          <th><span class="day-number"></span>Mercoledì</th>
+          <th><span class="day-number"></span>Giovedì</th>
+          <th><span class="day-number"></span>Venerdì</th>
+          <th><span class="day-number"></span>Sabato</th>
+          <th><span class="day-number"></span>Domenica</th>
+        </tr>
+      </thead>
+      <tbody id="calendarBody">
+        <!-- giorni generati via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module" src="gestione.js"></script>
+</body>
+</html>
