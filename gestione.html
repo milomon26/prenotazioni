@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestione Prenotazioni</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:;base64,=">
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav>
+    <button class="home-button" title="Torna alla homepage">🏠</button>
+    <div class="dropdown">
+      <button class="dropdown-button">Menù</button>
+      <div class="dropdown-content">
+        <a href="#" id="logout">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CALENDARIO -->
+  <div class="calendar-container">
+    <div class="calendar-nav">
+      <button class="primary-button" id="prevMonth">&lt;</button>
+      <h2 id="monthYear"></h2>
+      <button class="primary-button" id="nextMonth">&gt;</button>
+    </div>
+    <table class="calendar">
+      <thead>
+        <tr>
+          <th>Lunedì</th><th>Martedì</th><th>Mercoledì</th><th>Giovedì</th>
+          <th>Venerdì</th><th>Sabato</th><th>Domenica</th>
+        </tr>
+      </thead>
+      <tbody id="calendarBody"></tbody>
+    </table>
+  </div>
+
+  <!-- MODAL AGGIUNGI SLOT -->
+  <div id="slotModal" class="modal">
+    <div class="modal-content">
+      <h2>Aggiungi slot</h2>
+      <label for="startHour">Ora inizio</label>
+      <select id="startHour"></select>
+      <select id="startMinute">
+        <option>00</option><option>15</option><option>30</option><option>45</option>
+      </select>
+      <label for="endHour">Ora fine</label>
+      <select id="endHour"></select>
+      <select id="endMinute">
+        <option>00</option><option>15</option><option>30</option><option>45</option>
+      </select>
+      <label><input type="checkbox" id="visibleCheckbox"/> Visibile</label>
+      <div class="actions">
+        <button class="secondary-button" id="cancelSlot">Annulla</button>
+        <button class="primary-button" id="saveSlot">Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETTAGLI SLOT -->
+  <div id="detailModal" class="modal">
+    <div class="modal-content">
+      <h2>Dettagli prenotazione</h2>
+      <p id="detailSlotTime" style="font-weight:bold; margin-bottom:10px;"></p>
+      <label>Nome:<br/><span id="detailName"></span></label>
+      <label>Telefono:<br/><span id="detailPhone"></span></label>
+      <label><input type="checkbox" id="toggleOccupied"/> Occupato</label>
+      <label><input type="checkbox" id="toggleVisible"/> Visibile</label>
+      <div class="actions">
+        <button class="secondary-button" id="closeDetail">Chiudi</button>
+      </div>
+      <div class="actions">
+        <button class="secondary-button" id="confirmDelete">Elimina slot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFERMA ELIMINAZIONE -->
+  <div id="deleteConfirmModal" class="modal">
+    <div class="modal-content">
+      <h2>Conferma eliminazione</h2>
+      <p>Sei sicuro di voler eliminare questo slot?</p>
+      <div class="actions">
+        <button class="secondary-button" id="cancelDelete">Annulla</button>
+        <button class="primary-button" id="deleteSlot">Elimina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL OVERFLOW -->
+  <div id="overflowModal" class="modal">
+    <div class="modal-content">
+      <h2>Altri slot disponibili</h2>
+      <div id="overflowContent"></div>
+      <div class="actions">
+        <button class="secondary-button" id="closeOverflow">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs,
+      addDoc, updateDoc, deleteDoc, doc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
+      authDomain: "prenotazioni-app-87467.firebaseapp.com",
+      projectId: "prenotazioni-app-87467",
+      storageBucket: "prenotazioni-app-87467.appspot.com",
+      messagingSenderId: "322391103742",
+      appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let slotsByDate = {}, currentYear, currentMonth,
+        currentEditingDate, detailSlot = null;
+
+    function getEasterDate(year) {
+      const f=Math.floor, G=year%19, C=f(year/100);
+      const H=(C - f(C/4) - f((8*C+13)/25) + 19*G +15)%30;
+      const I=H - f(H/28)*(1 - f(H/28)*f(29/(H+1))*f((21-G)/11));
+      const J=(year+f(year/4)+I+2-C+f(C/4))%7;
+      const L=I-J, m=3+f((L+40)/44);
+      const d=L+28-31*f(m/4);
+      return new Date(year,m-1,d);
+    }
+
+    async function loadSlots() {
+      const snap = await getDocs(collection(db,'slots'));
+      snap.forEach(dSnap => {
+        const d = dSnap.data();
+        slotsByDate[d.date] = slotsByDate[d.date]||[];
+        slotsByDate[d.date].push({
+          id: dSnap.id,
+          date: d.date,
+          start: d.start,
+          end: d.end,
+          visible: d.visible,
+          occupied: d.occupied||false,
+          customerName: d.customerName||'',
+          customerPhone: d.customerPhone||''
+        });
+      });
+    }
+
+    function renderCalendar(year, month) {
+      const monthNames = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+                          "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+      document.getElementById('monthYear').textContent = `${monthNames[month]} ${year}`;
+      const tbody = document.getElementById('calendarBody');
+      tbody.innerHTML = '';
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      const fixed = ['01-01','04-25','05-01','06-02','08-15','12-25']
+        .map(d=>`${year}-${d}`);
+      const eas = getEasterDate(year);
+      const fmt = d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      fixed.push(fmt(eas), fmt(new Date(eas.getTime()+86400000)));
+
+      const firstDay = new Date(year,month,1).getDay();
+      const shift=(firstDay+6)%7;
+      const daysInMonth=new Date(year,month+1,0).getDate();
+
+      let day=1;
+      for(let w=0;w<6;w++){
+        const tr=document.createElement('tr');
+        for(let d=0;d<7;d++){
+          const td=document.createElement('td');
+          if((w===0&&d<shift)||day>daysInMonth){} else {
+            const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const cellDate=new Date(year,month,day);
+            const num=document.createElement('span');
+            num.className='day-number'; num.textContent=day; td.append(num);
+            if(d===6||fixed.includes(dateStr)) td.classList.add('holiday');
+            if(cellDate<today) td.classList.add('past-day');
+
+            const slots=slotsByDate[dateStr]||[];
+            slots.forEach(s=>{
+              const div=document.createElement('div');
+              div.className='slot-item';
+              if(!s.visible) div.classList.add('hidden');
+              else if(s.occupied) div.classList.add('occupied');
+              else { div.classList.add('visible','clickable'); div.dataset.slotId=s.id; }
+
+              const span=document.createElement('span');
+              span.textContent=`${s.start}–${s.end}`; div.append(span);
+
+              const chk=document.createElement('input');
+              chk.type='checkbox'; chk.checked=s.visible; chk.className='slot-checkbox';
+              chk.addEventListener('change',async e=>{
+                s.visible=e.target.checked;
+                await updateDoc(doc(db,'slots',s.id),{visible:s.visible});
+                renderCalendar(currentYear,currentMonth);
+              });
+              div.append(chk);
+
+              const trash=document.createElement('span');
+              trash.className='trash-icon'; trash.textContent='🗑️';
+              trash.addEventListener('click',()=>{
+                detailSlot=s;
+                document.getElementById('deleteConfirmModal').style.display='flex';
+              });
+              div.append(trash);
+
+              td.append(div);
+            });
+
+            day++;
+          }
+          tr.append(td);
+        }
+        tbody.append(tr);
+        if(day>daysInMonth)break;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded',async()=>{
+      document.querySelector('.home-button').onclick=()=>location.href='index.html';
+      document.querySelector('.dropdown-button').onclick=e=>{e.stopPropagation();const c=document.querySelector('.dropdown-content');c.style.display=c.style.display==='block'?'none':'block';};
+      window.addEventListener('click',e=>{if(!e.target.matches('.dropdown-button'))document.querySelector('.dropdown-content').style.display='none';});
+      document.getElementById('logout').onclick=e=>{e.preventDefault();location.href='index.html';};
+
+      for(let h=7;h<=20;h++){['startHour','endHour'].forEach(id=>{const o=document.createElement('option');o.value=o.text=String(h).padStart(2,'0');document.getElementById(id).append(o);});}
+
+      document.getElementById('cancelSlot').onclick=()=>document.getElementById('slotModal').style.display='none';
+      document.getElementById('saveSlot').onclick=async()=>{
+        const sh=document.getElementById('startHour').value,sm=document.getElementById('startMinute').value;
+        const eh=document.getElementById('endHour').value,em=document.getElementById('endMinute').value;
+        const vis=document.getElementById('visibleCheckbox').checked;
+        const start=`${sh}:${sm}`,end=`${eh}:${em}`;
+        const ref=await addDoc(collection(db,'slots'),{date:currentEditingDate,start,end,visible:vis,occupied:false,customerName:'',customerPhone:''});
+        slotsByDate[currentEditingDate].push({id:ref.id,date:currentEditingDate,start,end,visible:vis,occupied:false,customerName:'',customerPhone:''});
+        document.getElementById('slotModal').style.display='none';
+        renderCalendar(currentYear,currentMonth);
+      };
+
+      document.getElementById('closeDetail').onclick=()=>document.getElementById('detailModal').style.display='none';
+      document.getElementById('toggleOccupied').onchange=async e=>{detailSlot.occupied=e.target.checked;await updateDoc(doc(db,'slots',detailSlot.id),{occupied:detailSlot.occupied});renderCalendar(currentYear,currentMonth);};
+      document.getElementById('toggleVisible').onchange=async e=>{detailSlot.visible=e.target.checked;await updateDoc(doc(db,'slots',detailSlot.id),{visible:detailSlot.visible});renderCalendar(currentYear,currentMonth);};
+
+      document.getElementById('cancelDelete').onclick=()=>document.getElementById('deleteConfirmModal').style.display='none';
+      document.getElementById('deleteSlot').onclick=async()=>{await deleteDoc(doc(db,'slots',detailSlot.id));slotsByDate[detailSlot.date]=slotsByDate[detailSlot.date].filter(s=>s.id!==detailSlot.id);document.getElementById('deleteConfirmModal').style.display='none';renderCalendar(currentYear,currentMonth);};
+
+      document.getElementById('closeOverflow').onclick=()=>document.getElementById('overflowModal').style.display='none';
+
+      const calBody=document.getElementById('calendarBody');
+      calBody.addEventListener('dblclick',e=>{const cell=e.target.closest('td');if(!cell)return;const dayText=cell.querySelector('.day-number')?.textContent;if(!dayText)return;const m=String(currentMonth+1).padStart(2,'0'),y=currentYear;currentEditingDate=`${y}-${m}-${String(dayText).padStart(2,'0')}`;document.getElementById('slotModal').style.display='flex';});
+      calBody.addEventListener('click',e=>{const div=e.target.closest('.slot-item.clickable');if(div){const id=div.dataset.slotId;for(let date in slotsByDate){const s=slotsByDate[date].find(x=>x.id===id);if(s){openDetailModal(s);break;}}}const btn=e.target.closest('.show-more-button');if(btn)openOverflowModal(btn.dataset.date);});
+
+      document.getElementById('prevMonth').onclick=()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar(currentYear,currentMonth);};
+      document.getElementById('nextMonth').onclick=()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;}renderCalendar(currentYear,currentMonth);};
+
+      await loadSlots();
+      const now=new Date();currentYear=now.getFullYear();currentMonth=now.getMonth();
+      renderCalendar(currentYear,currentMonth);
+    });
+
+    function openDetailModal(s){
+      detailSlot=s;
+      document.getElementById('detailSlotTime').textContent=`${s.date} ${s.start} – ${s.end}`;
+      document.getElementById('detailName').textContent=s.customerName;
+      document.getElementById('detailPhone').textContent=s.customerPhone;
+      document.getElementById('toggleOccupied').checked=s.occupied;
+      document.getElementById('toggleVisible').checked=s.visible;
+      document.getElementById('detailModal').style.display='flex';
+    }
+
+    function openOverflowModal(date){
+      const cont=document.getElementById('overflowContent');
+      cont.innerHTML='';
+      (slotsByDate[date]||[]).forEach(s=>{const div=document.createElement('div');div.className='slot-item clickable';div.dataset.slotId=s.id;div.textContent=`${s.start}–${s.end}`;div.onclick=()=>{document.getElementById('overflowModal').style.display='none';openDetailModal(s);};cont.append(div);});
+      document.getElementById('overflowModal').style.display='flex';
+    }
+  </script>
+</body>
+</html>
