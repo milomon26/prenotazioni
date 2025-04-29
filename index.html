@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Homepage</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:;base64,=">
 </head>
 <body>
 
@@ -56,6 +57,60 @@
     </table>
   </div>
 
-  <script type="module" src="index.js"></script>
+  <!-- Script Inline -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Dropdown Menù
+      const menuBtn     = document.querySelector('.dropdown-button');
+      const menuContent = document.querySelector('.dropdown-content');
+      if (menuBtn && menuContent) {
+        menuBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          menuContent.style.display =
+            menuContent.style.display === 'block' ? 'none' : 'block';
+        });
+        document.addEventListener('click', e => {
+          if (!menuBtn.contains(e.target)) {
+            menuContent.style.display = 'none';
+          }
+        });
+      }
+
+      // Login Modal
+      const loginMenuItem = document.getElementById('loginMenuItem');
+      const loginModal    = document.getElementById('loginModal');
+      if (loginMenuItem && loginModal) {
+        loginMenuItem.addEventListener('click', e => {
+          e.preventDefault();
+          loginModal.style.display = 'flex';
+        });
+        window.addEventListener('click', e => {
+          if (e.target === loginModal) {
+            loginModal.style.display = 'none';
+          }
+        });
+      }
+
+      // Submit Login con Enter e click
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          // TODO: qui autenticazione Firebase
+        });
+      }
+
+      // Navigazione mesi calendario
+      const prevBtn = document.getElementById('prevMonth');
+      const nextBtn = document.getElementById('nextMonth');
+      if (prevBtn) prevBtn.addEventListener('click', () => {
+        // TODO: mese precedente
+      });
+      if (nextBtn) nextBtn.addEventListener('click', () => {
+        // TODO: mese successivo
+      });
+    });
+  </script>
+
 </body>
 </html>
