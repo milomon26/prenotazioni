@@ -8,7 +8,6 @@
   <link rel="icon" href="data:;base64,=">
 </head>
 <body>
-  <!-- NAVBAR -->
   <nav>
     <div class="placeholder"></div>
     <div class="dropdown">
@@ -19,7 +18,6 @@
     </div>
   </nav>
 
-  <!-- CALENDARIO -->
   <div class="calendar-container">
     <div class="calendar-nav">
       <button class="primary-button" id="prevMonth">&lt;</button>
@@ -37,7 +35,6 @@
     </table>
   </div>
 
-  <!-- MODAL LOGIN -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
       <h2>Accedi come admin</h2>
@@ -49,7 +46,6 @@
     </div>
   </div>
 
-  <!-- MODAL PRENOTAZIONE -->
   <div id="bookingModal" class="modal">
     <div class="modal-content">
       <h2>Prenota slot</h2>
@@ -65,7 +61,6 @@
     </div>
   </div>
 
-  <!-- MODAL OVERFLOW -->
   <div id="overflowModal" class="modal">
     <div class="modal-content">
       <h2>Altri slot disponibili</h2>
@@ -111,12 +106,12 @@
       snap.forEach(docSnap => {
         const d = docSnap.data();
         if (d.visible) {
-          slotsByDate[d.date] = slotsByDate[d.date] || [];
+          slotsByDate[d.date] = slotsByDate[d.date]||[];
           slotsByDate[d.date].push({
             id: docSnap.id,
             start: d.start,
             end: d.end,
-            occupied: d.occupied || false
+            occupied: d.occupied||false
           });
         }
       });
@@ -129,7 +124,6 @@
       const tbody = document.getElementById('calendarBody');
       tbody.innerHTML = '';
       const today = new Date(); today.setHours(0,0,0,0);
-
       const fixed = ['01-01','04-25','05-01','06-02','08-15','12-25']
         .map(d=>`${year}-${d}`);
       const eas = getEasterDate(year);
@@ -141,43 +135,37 @@
       const daysInMonth = new Date(year,month+1,0).getDate();
 
       let day = 1;
-      for (let w = 0; w < 6; w++) {
+      for (let w=0; w<6; w++) {
         const tr = document.createElement('tr');
-        for (let d = 0; d < 7; d++) {
+        for (let d=0; d<7; d++) {
           const td = document.createElement('td');
           if ((w===0 && d<shift) || day>daysInMonth) {
             // vuota
           } else {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            const cellDate = new Date(year, month, day);
-
+            const cellDate = new Date(year,month,day);
             const num = document.createElement('span');
-            num.className = 'day-number';
-            num.textContent = day;
-            td.append(num);
-
-            if (d===6 || fixed.includes(dateStr)) td.classList.add('holiday');
+            num.className='day-number'; num.textContent=day; td.append(num);
+            if (d===6||fixed.includes(dateStr)) td.classList.add('holiday');
             if (cellDate<today) td.classList.add('past-day');
 
-            const slots = slotsByDate[dateStr] || [];
+            const slots = slotsByDate[dateStr]||[];
             slots.slice(0,4).forEach(s => {
               const div = document.createElement('div');
-              div.className = 'slot-item ' + (s.occupied ? 'occupied' : 'visible clickable');
+              div.className = 'slot-item ' + (s.occupied?'occupied':'visible clickable');
               div.dataset.date   = dateStr;
               div.dataset.slotId = s.id;
-
               const span = document.createElement('span');
               span.textContent = `${s.start}–${s.end}`;
               div.append(span);
-
               td.append(div);
             });
 
-            if (slots.length > 4) {
+            if (slots.length>4) {
               const btn = document.createElement('button');
-              btn.className = 'show-more-button';
-              btn.textContent = `Vedi altri ${slots.length-4}`;
-              btn.dataset.date = dateStr;
+              btn.className='show-more-button';
+              btn.textContent=`Vedi altri ${slots.length-4}`;
+              btn.dataset.date=dateStr;
               td.append(btn);
             }
 
@@ -192,71 +180,98 @@
 
     function openBookingModal(date, slot) {
       bookingSlot = slot;
-      document.getElementById('customerName').value = '';
-      document.getElementById('customerPhone').value = '';
-      document.getElementById('bookingSlotInfo').textContent = `${date} ${slot.start}–${slot.end}`;
-      document.getElementById('bookingModal').style.display = 'flex';
+      document.getElementById('customerName').value='';
+      document.getElementById('customerPhone').value='';
+      document.getElementById('bookingSlotInfo').textContent=`${date} ${slot.start}–${slot.end}`;
+      document.getElementById('bookingModal').style.display='flex';
+    }
+
+    function openOverflowModal(date) {
+      const cont = document.getElementById('overflowContent');
+      cont.innerHTML='';
+      (slotsByDate[date]||[]).slice(4).forEach(s=>{
+        const div=document.createElement('div');
+        div.className='slot-item visible clickable';
+        div.dataset.date=date; div.dataset.slotId=s.id;
+        div.textContent=`${s.start}–${s.end}`;
+        div.onclick=()=>{
+          document.getElementById('overflowModal').style.display='none';
+          openBookingModal(date,s);
+        };
+        cont.append(div);
+      });
+      document.getElementById('overflowModal').style.display='flex';
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const menuBtn = document.getElementById('menuBtn'), menuContent = document.getElementById('menuContent');
-      menuBtn.onclick = e => { e.stopPropagation(); menuContent.style.display = menuContent.style.display==='block'?'none':'block'; };
-      document.addEventListener('click', e => { if (!menuContent.contains(e.target)) menuContent.style.display='none'; });
-
-      document.getElementById('loginLink').onclick = e => { e.preventDefault(); document.getElementById('loginModal').style.display = 'flex'; };
-      document.getElementById('submitLogin').onclick = async () => {
-        const u = document.getElementById('username').value.trim(), p = document.getElementById('password').value.trim();
-        if (!u||!p) return alert('Compila tutti i campi');
-        const snap = await getDocs(query(collection(db,'admins'),where('username','==',u),where('password','==',p)));
-        if (!snap.empty) location.href = 'gestione.html'; else alert('Credenziali non valide');
+      // Dropdown + login
+      const menuBtn=document.getElementById('menuBtn'),
+            menuContent=document.getElementById('menuContent');
+      menuBtn.onclick=e=>{e.stopPropagation(); menuContent.style.display=menuContent.style.display==='block'?'none':'block';};
+      document.addEventListener('click',e=>{if(!menuContent.contains(e.target))menuContent.style.display='none';});
+      document.getElementById('loginLink').onclick=e=>{e.preventDefault(); document.getElementById('loginModal').style.display='flex';};
+      document.getElementById('submitLogin').onclick=async()=>{
+        const u=document.getElementById('username').value.trim(),
+              p=document.getElementById('password').value.trim();
+        if(!u||!p)return alert('Compila tutti i campi');
+        const snap=await getDocs(query(collection(db,'admins'),where('username','==',u),where('password','==',p)));
+        if(!snap.empty) location.href='gestione.html'; else alert('Credenziali non valide');
       };
-      window.addEventListener('click', e => { if (e.target===document.getElementById('loginModal')) document.getElementById('loginModal').style.display='none'; });
+      window.addEventListener('click',e=>{ if(e.target===document.getElementById('loginModal')) document.getElementById('loginModal').style.display='none'; });
 
-      document.getElementById('cancelBooking').onclick = () => document.getElementById('bookingModal').style.display='none';
-      document.getElementById('confirmBooking').onclick = async () => {
-        const name = document.getElementById('customerName').value.trim();
-        const phone = document.getElementById('customerPhone').value.trim();
-        if (!bookingSlot||!name||!phone) return alert('Compila tutti i campi');
-        await updateDoc(doc(db,'slots',bookingSlot.id),{occupied:true,visible:false,customerName:name,customerPhone:phone});
-        bookingSlot.occupied = true; bookingSlot.visible = false;
+      // Booking modal
+      document.getElementById('cancelBooking').onclick=()=>
+        document.getElementById('bookingModal').style.display='none';
+      document.getElementById('confirmBooking').onclick=async()=>{
+        const name=document.getElementById('customerName').value.trim(),
+              phone=document.getElementById('customerPhone').value.trim();
+        if(!bookingSlot||!name||!phone) return alert('Compila tutti i campi');
+        await updateDoc(doc(db,'slots',bookingSlot.id),{
+          occupied:true,
+          visible:false,
+          customerName:name,
+          customerPhone:phone
+        });
+        bookingSlot.occupied=true;
+        bookingSlot.visible=false;
         document.getElementById('bookingModal').style.display='none';
         renderCalendar(currentYear,currentMonth);
       };
 
-      document.getElementById('closeOverflow').onclick = () => document.getElementById('overflowModal').style.display='none';
+      // Overflow close
+      document.getElementById('closeOverflow').onclick=()=>
+        document.getElementById('overflowModal').style.display='none';
 
-      document.getElementById('calendarBody').addEventListener('click', e => {
-        const slotDiv = e.target.closest('.slot-item.clickable');
-        if (slotDiv) {
-          const date = slotDiv.dataset.date, id = slotDiv.dataset.slotId;
-          const slot = (slotsByDate[date]||[]).find(s => s.id===id);
-          if (slot) openBookingModal(date, slot);
+      // Delegate click
+      document.getElementById('calendarBody').addEventListener('click',e=>{
+        const slotDiv=e.target.closest('.slot-item.clickable');
+        if(slotDiv){
+          const date=slotDiv.dataset.date,
+                id=slotDiv.dataset.slotId;
+          const slot=(slotsByDate[date]||[]).find(s=>s.id===id);
+          if(slot) openBookingModal(date,slot);
         }
-        const btn = e.target.closest('.show-more-button');
-        if (btn) openOverflowModal(btn.dataset.date);
+        const btn=e.target.closest('.show-more-button');
+        if(btn) openOverflowModal(btn.dataset.date);
       });
 
-      document.getElementById('prevMonth').onclick = () => { currentMonth--; if (currentMonth<0){currentMonth=11;currentYear--;} renderCalendar(currentYear,currentMonth); };
-      document.getElementById('nextMonth').onclick = () => { currentMonth++; if (currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(currentYear,currentMonth); };
+      // Month nav
+      document.getElementById('prevMonth').onclick=()=>{
+        currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;}
+        renderCalendar(currentYear,currentMonth);
+      };
+      document.getElementById('nextMonth').onclick=()=>{
+        currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;}
+        renderCalendar(currentYear,currentMonth);
+      };
 
+      // Init
       await loadSlots();
-      const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth();
+      const now=new Date();
+      currentYear=now.getFullYear();
+      currentMonth=now.getMonth();
       renderCalendar(currentYear,currentMonth);
     });
-
-    function openOverflowModal(date) {
-      const cont = document.getElementById('overflowContent');
-      cont.innerHTML = '';
-      (slotsByDate[date]||[]).slice(4).forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'slot-item visible clickable';
-        div.dataset.date = date; div.dataset.slotId = s.id;
-        div.textContent = `${s.start}–${s.end}`;
-        div.onclick = () => { document.getElementById('overflowModal').style.display = 'none'; openBookingModal(date, s); };
-        cont.append(div);
-      });
-      document.getElementById('overflowModal').style.display = 'flex';
-    }
   </script>
 </body>
 </html>
