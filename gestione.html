@@ -163,16 +163,14 @@
       const holidays = getItalianHolidays(year);
       // Compute number of days in month for correct query
       const monthDays = new Date(year, month + 1, 0).getDate();
-      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(monthDays).padStart(2, '0')}`;
+      const queryStartDate = `" + year + "-" + String(month + 1).padStart(2, '0') + "-01"; // start of month
+      const queryEndDate = `" + year + "-" + String(month + 1).padStart(2, '0') + "-" + String(monthDays).padStart(2, '0') + "`; // end of month
       // Fetch slots from Firestore
-      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
       let slotsSnap;
       try {
         slotsSnap = await db.collection('slot')
           .where('date', '>=', startDate)
-          .where('date', '<=', endDate)
+          .where('date', '<=', queryEndDate)
           .get();
       } catch (e) {
         console.error('Errore fetching slots:', e);
