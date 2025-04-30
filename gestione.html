@@ -130,7 +130,7 @@
         console.error('Errore salvataggio slot:', err);
       }
       slotModal.classList.remove('active');
-      await renderCalendar2();{ date: selectedDate, start, end, visible, occupied });
+      await renderCalendar2();
       } catch (err) {
         console.error('Errore salvataggio slot:', err);
       }
@@ -249,3 +249,4 @@
   </script>
 </body>
 </html>
+
