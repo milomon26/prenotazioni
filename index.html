@@ -6,12 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario Cute</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
 </head>
 <body>
   <nav class="dropdown-menu">
     <button class="menu-button">Menu ▼</button>
     <ul class="menu-list">
-      <li class="menu-item">Login</li>
+      <li class="menu-item" id="login-button">Login</li>
     </ul>
   </nav>
 
@@ -30,6 +34,40 @@
   </div>
 
   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
+      authDomain: "prenotazioni-app-87467.firebaseapp.com",
+      projectId: "prenotazioni-app-87467",
+      storageBucket: "prenotazioni-app-87467.firebasestorage.app",
+      messagingSenderId: "322391103742",
+      appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
+    };
+    // Inizializza Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Gestione login: verifica presenza nel documento 'admins'
+    document.getElementById('login-button').addEventListener('click', async () => {
+      try {
+        const email = prompt('Inserisci email:');
+        const password = prompt('Inserisci password:');
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        // Controlla Firestore: collezione 'admins', documento con uid
+        const adminDoc = await db.collection('admins').doc(user.uid).get();
+        if (adminDoc.exists) {
+          alert(`Benvenuto Admin ${user.email}`);
+        } else {
+          alert('Non autorizzato: utente non presente in admins');
+          await auth.signOut();
+        }
+      } catch (error) {
+        alert(`Errore: ${error.message}`);
+      }
+    });
+
     // Calcola la data di Pasqua (algoritmo di Meeus)
     function calculateEaster(year) {
       const a = year % 19;
@@ -49,27 +87,25 @@
       return new Date(year, month - 1, day);
     }
 
-    // Restituisce le festività italiane (con formato YYYY-MM-DD senza toISOString)
+    // Restituisce le festività italiane (formato YYYY-MM-DD)
     function getItalianHolidays(year) {
       const easter = calculateEaster(year);
       const easterMonday = new Date(easter);
       easterMonday.setDate(easterMonday.getDate() + 1);
-
       const raw = [
-        new Date(year, 0, 1),      // Capodanno
-        new Date(year, 0, 6),      // Epifania
-        easter,                    // Pasqua
-        easterMonday,             // Pasquetta
-        new Date(year, 3, 25),     // Festa della Liberazione
-        new Date(year, 4, 1),      // Festa dei Lavoratori
-        new Date(year, 5, 2),      // Festa della Repubblica
-        new Date(year, 7, 15),     // Ferragosto
-        new Date(year, 10, 1),     // Ognissanti
-        new Date(year, 11, 8),     // Immacolata Concezione
-        new Date(year, 11, 25),    // Natale
-        new Date(year, 11, 26)     // Santo Stefano
+        new Date(year, 0, 1),
+        new Date(year, 0, 6),
+        easter,
+        easterMonday,
+        new Date(year, 3, 25),
+        new Date(year, 4, 1),
+        new Date(year, 5, 2),
+        new Date(year, 7, 15),
+        new Date(year, 10, 1),
+        new Date(year, 11, 8),
+        new Date(year, 11, 25),
+        new Date(year, 11, 26)
       ];
-
       return raw.map(d => {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -90,7 +126,7 @@
       monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
       document.getElementById('month-year').textContent = `${monthName} ${year}`;
 
-      // Giorni della settimana per intero
+      // Nomi dei giorni per intero
       const names = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
       const dayNamesRow = document.getElementById('day-names');
       dayNamesRow.innerHTML = '';
@@ -100,22 +136,23 @@
         dayNamesRow.appendChild(th);
       });
 
-      // Corpo del calendario
+      // Calcola righe necessarie
       const firstDay = new Date(year, month, 1);
-      const startDay = (firstDay.getDay() + 6) % 7; // lunedì=0
+      const startDay = (firstDay.getDay() + 6) % 7;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const totalCells = startDay + daysInMonth;
+      const rows = Math.ceil(totalCells / 7);
 
+      // Popola il corpo
       const body = document.getElementById('calendar-body');
       body.innerHTML = '';
       let date = 1;
-
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < rows; i++) {
         const row = document.createElement('tr');
         for (let j = 0; j < 7; j++) {
           const cell = document.createElement('td');
-          if (i === 0 && j < startDay) {
-            cell.textContent = '';
-          } else if (date > daysInMonth) {
+          const cellIndex = i * 7 + j;
+          if (cellIndex < startDay || date > daysInMonth) {
             cell.textContent = '';
           } else {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
@@ -134,15 +171,12 @@
       current.setMonth(current.getMonth() - 1);
       renderCalendar();
     });
-
     document.getElementById('next-month').addEventListener('click', () => {
       current.setMonth(current.getMonth() + 1);
       renderCalendar();
     });
 
-    // Inizializza calendario
     renderCalendar();
   </script>
-
 </body>
 </html>
