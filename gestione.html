@@ -11,7 +11,7 @@
   <nav class="dropdown-menu">
     <button class="menu-button">Menu ▼</button>
     <ul class="menu-list">
-      <li class="menu-item" onclick="window.location.href='index.html'">Home Cute</li>
+      <li class="menu-item" id="home-button">Home Cute</li>
     </ul>
   </nav>
 
@@ -30,9 +30,11 @@
   </div>
 
   <script>
-    // Reuse holiday and easter functions from index (exported to window scope)
-    document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1); renderCalendar('2-'); });
-    document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar('2-'); });
+    // Home button
+    document.getElementById('home-button').addEventListener('click',()=>window.location.href='index.html');
+    // Calendar reuse
+    document.getElementById('prev2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()-1);renderCalendar('calendar2-'.replace('calendar2-','2-'));});
+    document.getElementById('next2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()+1);renderCalendar('2-');});
     renderCalendar('2-');
   </script>
 </body>
