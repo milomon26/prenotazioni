@@ -1,3 +1,4 @@
+/* styles.css */
 body {
   font-family: 'Comic Sans MS', cursive, sans-serif;
   background: #fff0f5;
@@ -72,8 +73,7 @@ body {
   border-collapse: collapse;
   table-layout: auto;
 }
-.calendar th,
-.calendar td {
+.calendar th, .calendar td {
   border: 1px solid #ffb3d9;
   padding: 8px;
   text-align: center;
@@ -82,10 +82,7 @@ body {
 .calendar th {
   background: #ffccde;
 }
-.holiday,
-.sunday {
+.holiday, .sunday {
   color: red;
 }
-th {
-  white-space: nowrap;
-}
+th { white-space: nowrap; }
