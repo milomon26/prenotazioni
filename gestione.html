@@ -112,13 +112,30 @@
     document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-save').addEventListener('click', async () => {
+      // Read form values
       const start = `${document.getElementById('start-hour').value}:${document.getElementById('start-min').value}`;
       const end = `${document.getElementById('end-hour').value}:${document.getElementById('end-min').value}`;
       const visible = document.getElementById('slot-visible').checked;
       const occupied = document.getElementById('slot-occupied').checked;
-      await db.collection('slots').add({ date: selectedDate, start, end, visible, occupied });
+      const docId = `${selectedDate}_${start.replace(':','')}_${end.replace(':','')}`;
+      try {
+        const docRef = db.collection('slots').doc(docId);
+        const existing = await docRef.get();
+        if (!existing.exists) {
+          await docRef.set({ date: selectedDate, start, end, visible, occupied });
+        } else {
+          alert('Slot già esistente per questo orario.');
+        }
+      } catch (err) {
+        console.error('Errore salvataggio slot:', err);
+      }
       slotModal.classList.remove('active');
-      renderCalendar2();
+      await renderCalendar2();{ date: selectedDate, start, end, visible, occupied });
+      } catch (err) {
+        console.error('Errore salvataggio slot:', err);
+      }
+      slotModal.classList.remove('active');
+      await renderCalendar2();
     });
 
     // Holidays functions
