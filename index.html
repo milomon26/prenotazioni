@@ -20,6 +20,18 @@
     </ul>
   </nav>
 
+  <!-- Popup di login -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <span id="close-modal" class="close">×</span>
+      <h2>Login Admin</h2>
+      <input type="text" id="login-username" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button id="login-submit" class="menu-button">Accedi</button>
+      <p id="login-error" class="error-message"></p>
+    </div>
+  </div>
+
   <!-- Calendario -->
   <div class="calendar-container">
     <div class="calendar-header">
@@ -36,35 +48,52 @@
   </div>
 
   <script>
-    // Chiudi menu cliccando fuori
+    // Toggle menu
     document.addEventListener('click', () => {
       document.querySelectorAll('.menu-list').forEach(ul => ul.style.display = 'none');
     });
-    // Toggle menu
     document.getElementById('menu-button').addEventListener('click', e => {
       e.stopPropagation();
       const ul = document.querySelector('.dropdown-menu .menu-list');
       ul.style.display = (ul.style.display === 'block') ? 'none' : 'block';
     });
 
+    // Modal login
+    const modal = document.getElementById('login-modal');
+    const openBtn = document.getElementById('login-button');
+    const closeBtn = document.getElementById('close-modal');
+    openBtn.addEventListener('click', e => { e.stopPropagation(); showModal(); });
+    closeBtn.addEventListener('click', hideModal);
+    modal.addEventListener('click', e => { if (e.target === modal) hideModal(); });
+    function showModal() { document.getElementById('login-error').textContent = ''; modal.classList.add('active'); }
+    function hideModal() { modal.classList.remove('active'); }
+
     // Firebase init
     const firebaseConfig = { apiKey: "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco", authDomain: "prenotazioni-app-87467.firebaseapp.com", projectId: "prenotazioni-app-87467", storageBucket: "prenotazioni-app-87467.firebasestorage.app", messagingSenderId: "322391103742", appId: "1:322391103742:web:6f74e033b57281bdaaedaf" };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth(); const db = firebase.firestore();
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Login come admin
-    document.getElementById('login-button').addEventListener('click', async () => {
+    // Submit login
+    document.getElementById('login-submit').addEventListener('click', async () => {
+      const email = document.getElementById('login-username').value;
+      const pass = document.getElementById('login-password').value;
       try {
-        const email = prompt('Email:');
-        const pass = prompt('Password:');
         const uc = await auth.signInWithEmailAndPassword(email, pass);
         const adminDoc = await db.collection('admins').doc(uc.user.uid).get();
-        if (adminDoc.exists) window.location.href = 'gestione.html';
-        else { alert('Non autorizzato'); await auth.signOut(); }
-      } catch (e) { alert(e.message); }
+        if (adminDoc.exists) {
+          hideModal();
+          window.location.href = 'gestione.html';
+        } else {
+          await auth.signOut();
+          document.getElementById('login-error').textContent = 'Utente non autorizzato';
+        }
+      } catch (e) {
+        document.getElementById('login-error').textContent = e.message;
+      }
     });
 
-    // Funzioni calendario
+    // Calendar functions
     function calculateEaster(year) {
       const a = year % 19, b = Math.floor(year / 100), c = year % 100;
       const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
@@ -79,9 +108,13 @@
     function getItalianHolidays(year) {
       const easter = calculateEaster(year);
       const easterMon = new Date(easter); easterMon.setDate(easter.getDate() + 1);
-      const fixed = [new Date(year,0,1), new Date(year,0,6), new Date(year,3,25),
-        new Date(year,4,1), new Date(year,5,2), new Date(year,7,15),
-        new Date(year,10,1), new Date(year,11,8), new Date(year,11,25), new Date(year,11,26)];
+      const fixed = [
+        new Date(year,0,1), new Date(year,0,6),
+        new Date(year,3,25), new Date(year,4,1),
+        new Date(year,5,2), new Date(year,7,15),
+        new Date(year,10,1), new Date(year,11,8),
+        new Date(year,11,25), new Date(year,11,26)
+      ];
       return [easter, easterMon, ...fixed].map(d =>
         `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
       );
@@ -120,7 +153,6 @@
         body.appendChild(row);
       }
     }
-    // Stato e eventi
     window.calendarDate = new Date();
     document.getElementById('prev-month').addEventListener('click', () => {
       window.calendarDate.setMonth(window.calendarDate.getMonth() - 1);
