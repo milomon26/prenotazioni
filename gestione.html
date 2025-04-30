@@ -34,19 +34,44 @@
   <script>
     // Toggle menu gestione
     document.addEventListener('click', () => {
-      document.querySelectorAll('.dropdown-menu .menu-list')
-              .forEach(ul => ul.style.display = 'none');
+      document.querySelectorAll('.dropdown-menu .menu-list').forEach(ul => ul.style.display = 'none');
     });
     document.getElementById('menu-button-2').addEventListener('click', e => {
       e.stopPropagation();
       const ul = document.querySelector('.dropdown-menu .menu-list');
-      ul.style.display = (ul.style.display === 'block') ? 'none' : 'block';
+      ul.style.display = ul.style.display === 'block' ? 'none' : 'block';
     });
-    document.getElementById('home-button').addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
+    document.getElementById('home-button').addEventListener('click', () => window.location.href = 'index.html');
 
-    // (inserisci qui lo script renderCalendar2 come già definito)
+    // Calcola Pasqua e festività (riutilizzo funzioni)
+    function calculateEaster(year) { /* ... */ }
+    function getItalianHolidays(year) { /* ... */ }
+    function renderCalendar2() {
+      const today = window.calendar2Date;
+      const year = today.getFullYear(), month = today.getMonth();
+      const holidays = getItalianHolidays(year);
+      let mn = today.toLocaleString('it-IT', { month: 'long' });
+      mn = mn.charAt(0).toUpperCase() + mn.slice(1);
+      document.getElementById('month2-year').textContent = `${mn} ${year}`;
+      const names = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const head = document.getElementById('day2-names'); head.innerHTML = '';
+      names.forEach(n=>{const th=document.createElement('th');th.textContent=n;head.appendChild(th);});
+      const first=new Date(year,month,1), start=(first.getDay()+6)%7, dim=new Date(year,month+1,0).getDate();
+      const rows=Math.ceil((start+dim)/7), body=document.getElementById('calendar2-body'); body.innerHTML=''; let d=1;
+      for(let i=0;i<rows;i++){const row=document.createElement('tr');
+        for(let j=0;j<7;j++){const cell=document.createElement('td'),idx=i*7+j;
+          if(idx<start||d>dim)cell.textContent='';else{const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            cell.textContent=d; if(j===6)cell.classList.add('sunday'); if(holidays.includes(ds))cell.classList.add('holiday'); d++;}
+          row.appendChild(cell);
+        }
+        body.appendChild(row);
+      }
+    }
+    window.calendar2Date = new Date();
+    document.getElementById('prev2-month').addEventListener('click', ()=>{window.calendar2Date.setMonth(window.calendar2Date.getMonth()-1);renderCalendar2();});
+    document.getElementById('next2-month').addEventListener('click', ()=>{window.calendar2Date.setMonth(window.calendar2Date.getMonth()+1);renderCalendar2();});
+    renderCalendar2();
   </script>
+
 </body>
 </html>
