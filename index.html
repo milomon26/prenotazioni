@@ -49,11 +49,13 @@
       return new Date(year, month - 1, day);
     }
 
+    // Restituisce le festività italiane (con formato YYYY-MM-DD senza toISOString)
     function getItalianHolidays(year) {
       const easter = calculateEaster(year);
       const easterMonday = new Date(easter);
       easterMonday.setDate(easterMonday.getDate() + 1);
-      return [
+
+      const raw = [
         new Date(year, 0, 1),      // Capodanno
         new Date(year, 0, 6),      // Epifania
         easter,                    // Pasqua
@@ -66,7 +68,14 @@
         new Date(year, 11, 8),     // Immacolata Concezione
         new Date(year, 11, 25),    // Natale
         new Date(year, 11, 26)     // Santo Stefano
-      ].map(d => d.toISOString().split('T')[0]);
+      ];
+
+      return raw.map(d => {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      });
     }
 
     let current = new Date();
@@ -76,12 +85,15 @@
       const month = current.getMonth();
       const holidays = getItalianHolidays(year);
 
-      document.getElementById('month-year').textContent = current.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+      // Mese con iniziale maiuscola
+      let monthName = current.toLocaleString('it-IT', { month: 'long' });
+      monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      document.getElementById('month-year').textContent = `${monthName} ${year}`;
 
-      // Giorni della settimana
+      // Giorni della settimana per intero
+      const names = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
       const dayNamesRow = document.getElementById('day-names');
       dayNamesRow.innerHTML = '';
-      const names = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
       names.forEach(name => {
         const th = document.createElement('th');
         th.textContent = name;
@@ -90,7 +102,7 @@
 
       // Corpo del calendario
       const firstDay = new Date(year, month, 1);
-      const startDay = (firstDay.getDay() + 6) % 7; // JS: domenica=0, vogliamo lun=0
+      const startDay = (firstDay.getDay() + 6) % 7; // lunedì=0
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       const body = document.getElementById('calendar-body');
@@ -108,9 +120,7 @@
           } else {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
             cell.textContent = date;
-            // Domenica
             if (j === 6) cell.classList.add('sunday');
-            // Festività
             if (holidays.includes(dateStr)) cell.classList.add('holiday');
             date++;
           }
@@ -130,7 +140,7 @@
       renderCalendar();
     });
 
-    // Inizializza
+    // Inizializza calendario
     renderCalendar();
   </script>
 
