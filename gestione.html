@@ -101,22 +101,10 @@
     let selectedDate;
     document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
-    document.getElementById('slot-save').addEventListener('click', async () => {
-      const startH = document.getElementById('start-hour').value;
-      const startM = document.getElementById('start-min').value;
-      const endH = document.getElementById('end-hour').value;
-      const endM = document.getElementById('end-min').value;
-      const visible = document.getElementById('slot-visible').checked;
-      const occupied = document.getElementById('slot-occupied').checked;
-      await db.collection('slot').add({
-        date: selectedDate,
-        start: `${startH}:${startM}`,
-        end: `${endH}:${endM}`,
-        visible,
-        occupied
-      });
+    document.getElementById('slot-save').addEventListener('click', async () => {$1
       slotModal.classList.remove('active');
-      renderCalendar2();
+      // Aggiorna il calendario e attendi il completamento
+      await renderCalendar2();
     });
 
     // Calendar rendering functions
