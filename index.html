@@ -58,7 +58,8 @@
         // Controlla Firestore: collezione 'admins', documento con uid
         const adminDoc = await db.collection('admins').doc(user.uid).get();
         if (adminDoc.exists) {
-          alert(`Benvenuto Admin ${user.email}`);
+          // Login riuscito, reindirizza a gestione.html
+          window.location.href = 'gestione.html';
         } else {
           alert('Non autorizzato: utente non presente in admins');
           await auth.signOut();
@@ -178,5 +179,3 @@
 
     renderCalendar();
   </script>
-</body>
-</html>
