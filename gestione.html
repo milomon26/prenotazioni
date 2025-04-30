@@ -102,6 +102,34 @@
     document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-save').addEventListener('click', async () => {
+      // Read values
+      const startH = document.getElementById('start-hour').value;
+      const startM = document.getElementById('start-min').value;
+      const endH = document.getElementById('end-hour').value;
+      const endM = document.getElementById('end-min').value;
+      const visible = document.getElementById('slot-visible').checked;
+      const occupied = document.getElementById('slot-occupied').checked;
+      // Save to Firestore
+      try {
+        await db.collection('slot').add({
+          date: selectedDate,
+          start: `${startH}:${startM}`,
+          end: `${endH}:${endM}`,
+          visible,
+          occupied
+        });
+        slotModal.classList.remove('active');
+        // Refresh calendar
+        await renderCalendar2();
+      } catch (e) {
+        console.error('Errore salvataggio slot:', e);
+        alert('Impossibile salvare lo slot.');
+      }
+    });
+    let selectedDate;
+    document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
+    document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
+    document.getElementById('slot-save').addEventListener('click', async () => {
       slotModal.classList.remove('active');
       // Aggiorna il calendario e attendi il completamento
       await renderCalendar2();
