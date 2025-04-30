@@ -227,11 +227,9 @@
     }
 
     window.calendar2Date = new Date();
+    document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1);     renderCalendar2();
     document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1); renderCalendar2(); });
     document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar2(); });
-    renderCalendar2(); });
-    document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar2(); });
-    renderCalendar2();
   </script>
 </body>
 </html>
