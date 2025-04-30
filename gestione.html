@@ -10,7 +10,7 @@
     body { font-family: 'Comic Neue', cursive, sans-serif; }
     .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); align-items:center; justify-content:center; pointer-events:none; z-index:2000; }
     .modal.active { display:flex; pointer-events:auto; }
-    .modal-content { background:#fff; padding:20px; border-radius:12px; min-width:320px; pointer-events:auto; }
+    .modal-content { background:#fff; padding:20px; border-radius:12px; min-width:320px; pointer-events:auto; position: relative; }
     .close { position:absolute; top:10px; right:10px; cursor:pointer; }
     .form-row { margin-top:10px; }
     .form-actions { margin-top:20px; display:flex; justify-content:space-between; }
@@ -58,23 +58,26 @@
   </div>
 
   <script>
-    const firebaseConfig = { apiKey:"...", authDomain:"...", projectId:"...", storageBucket:"...", messagingSenderId:"...", appId:"..." };
+    // Firebase init
+    const firebaseConfig = { /* tua config */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Menu
     document.addEventListener('click',()=>document.querySelectorAll('.menu-list').forEach(u=>u.style.display='none'));
     document.getElementById('menu-button-2').addEventListener('click',e=>{e.stopPropagation();const u=document.querySelector('.dropdown-menu .menu-list');u.style.display=u.style.display==='block'?'none':'block';});
     document.getElementById('home-button').addEventListener('click',()=>location.href='index.html');
 
+    // Time selects
     const hours=Array.from({length:14},(_,i)=>i+7), mins=['00','15','30','45'];
     function populate(hId,mId){const h=document.getElementById(hId),m=document.getElementById(mId);hours.forEach(x=>h.add(new Option(x,x)));mins.forEach(x=>m.add(new Option(x,x)));}
     populate('start-hour','start-min');populate('end-hour','end-min');
 
-    const slotModal=document.getElementById('slot-modal');let selectedDate;
+    // Modal Logic
+    const slotModal = document.getElementById('slot-modal'); let selectedDate;
     document.getElementById('close-slot-modal').addEventListener('click',()=>slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click',()=>slotModal.classList.remove('active'));
-
-    const extrasModal=document.getElementById('extras-modal');
+    const extrasModal = document.getElementById('extras-modal');
     document.getElementById('close-extras-modal').addEventListener('click',()=>extrasModal.classList.remove('active'));
 
     document.getElementById('slot-save').addEventListener('click',async()=>{
@@ -86,41 +89,30 @@
       const docRef=db.collection('slots').doc(docId);
       const existing=await docRef.get();
       if(!existing.exists) await docRef.set({date:selectedDate,start,end,visible,occupied}); else alert('Slot già esistente');
-      slotModal.classList.remove('active');await renderCalendar2();
+      slotModal.classList.remove('active'); await renderCalendar2();
     });
 
-    function calculateEaster(y){/* Meeus */}
-    function getItalianHolidays(y) {
+    function calculateEaster(y){ /* implementazione Meeus */ }
+    function getItalianHolidays(y){
       const easter = calculateEaster(y);
-      const easterMon = new Date(easter);
-      easterMon.setDate(easter.getDate() + 1);
-      const fixed = [
-        new Date(y, 0, 1), new Date(y, 0, 6),
-        new Date(y, 3, 25), new Date(y, 4, 1),
-        new Date(y, 5, 2), new Date(y, 7, 15),
-        new Date(y, 10, 1), new Date(y, 11, 8),
-        new Date(y, 11, 25), new Date(y, 11, 26)
-      ];
-      const all = [easter, easterMon, ...fixed];
-      return all.map(d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+      const easterMon = new Date(easter); easterMon.setDate(easter.getDate()+1);
+      const fixed=[new Date(y,0,1),new Date(y,0,6),new Date(y,3,25),new Date(y,4,1),new Date(y,5,2),new Date(y,7,15),new Date(y,10,1),new Date(y,11,8),new Date(y,11,25),new Date(y,11,26)];
+      return [easter,easterMon,...fixed].map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
     }
--${mm}-${dd}`;
-      });
-    }catch{return [];} }
 
     async function renderCalendar2(){
-      const today=window.calendar2Date,y=today.getFullYear(),M=today.getMonth();
-      let holidays=[]; try{holidays=getItalianHolidays(y);}catch{};
+      const today=window.calendar2Date, y=today.getFullYear(), M=today.getMonth();
+      const holidays=getItalianHolidays(y);
       const dim=new Date(y,M+1,0).getDate();
-      const sD=`${y}-${String(M+1).padStart(2,'0')}-01`,eD=`${y}-${String(M+1).padStart(2,'0')}-${String(dim).padStart(2,'0')}`;
+      const sD=`${y}-${String(M+1).padStart(2,'0')}-01`, eD=`${y}-${String(M+1).padStart(2,'0')}-${String(dim).padStart(2,'0')}`;
       const snap=await db.collection('slots').where('date','>=',sD).where('date','<=',eD).get();
-      const byDay={};snap.docs.forEach(d=>{const s=d.data(),day=Number(s.date.split('-')[2]);(byDay[day]||(byDay[day]=[])).push(s);});
+      const byDay={}; snap.docs.forEach(d=>{const s=d.data(),day=Number(s.date.split('-')[2]);(byDay[day]||(byDay[day]=[])).push(s);});
       document.getElementById('month2-year').textContent=today.toLocaleString('it-IT',{month:'long'}).replace(/^./,c=>c.toUpperCase())+` ${y}`;
-      const head=document.getElementById('day2-names');head.innerHTML='';['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'].forEach(n=>{const th=document.createElement('th');th.textContent=n;head.appendChild(th);});
-      const first=new Date(y,M,1),start=(first.getDay()+6)%7,rows=Math.ceil((start+dim)/7),body=document.getElementById('calendar2-body');body.innerHTML='';let d=1;
-      for(let i=0;i<rows;i++){const tr=document.createElement('tr');for(let j=0;j<7;j++){const td=document.createElement('td'),idx=i*7+j;if(idx<start||d>dim){td.textContent='';}else{td.innerHTML=`<div class="day-number">${d}</div>`;if(j===6)td.classList.add('sunday');const ds=`${y}-${String(M+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;if(holidays.includes(ds))td.classList.add('holiday');const slots=byDay[d]||[];slots.slice(0,4).forEach(s=>{const div=document.createElement('div');div.classList.add(s.occupied?'slot-occupied':'slot-free');div.innerHTML=`${s.start}-${s.end}<span class="slot-controls"><input type="checkbox"${s.visible?' checked':''}><input type="checkbox"${s.occupied?' checked':''}><span class="trash-icon" data-date="${ds}" data-start="${s.start}" data-end="${s.end}">🗑️</span></span>`;td.appendChild(div);});if(slots.length>4){const more=document.createElement('div');more.classList.add('more-link');more.textContent=`Vedi gli altri ${slots.length-4} slot`;more.addEventListener('click',()=>showExtras(ds,slots));td.appendChild(more);}td.addEventListener('dblclick',e=>{e.stopPropagation();selectedDate=ds;slotModal.classList.add('active');});d++;}tr.appendChild(td);}body.appendChild(tr);}    }
-    function showExtras(date,slots){const list=document.getElementById('extras-list');list.innerHTML='';slots.forEach(s=>{const row=document.createElement('div');row.classList.add(s.occupied?'slot-occupied':'slot-free');row.innerHTML=`${s.start}-${s.end}<span class="slot-controls"><input type="checkbox"${s.visible?' checked':''}><input type="checkbox"${s.occupied?' checked':''}><span class="trash-icon">🗑️</span></span>`;list.appendChild(row);});extrasModal.classList.add('active');}
-    window.calendar2Date=new Date();document.getElementById('prev2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()-1);renderCalendar2();});document.getElementById('next2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()+1);renderCalendar2();});renderCalendar2();
+      const head=document.getElementById('day2-names'); head.innerHTML=''; ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'].forEach(n=>{const th=document.createElement('th');th.textContent=n;head.appendChild(th);});
+      const first=new Date(y,M,1), start=(first.getDay()+6)%7, rows=Math.ceil((start+dim)/7), body=document.getElementById('calendar2-body'); body.innerHTML=''; let d=1;
+      for(let i=0;i<rows;i++){const tr=document.createElement('tr'); for(let j=0;j<7;j++){const td=document.createElement('td'), idx=i*7+j; if(idx<start||d>dim){td.textContent='';} else { const ds=`${y}-${String(M+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; td.innerHTML=`<div class="day-number">${d}</div>`; if(j===6) td.classList.add('sunday'); if(holidays.includes(ds)) td.classList.add('holiday'); const slots=byDay[d]||[]; slots.slice(0,4).forEach(s=>{const div=document.createElement('div');div.classList.add(s.occupied?'slot-occupied':'slot-free');div.innerHTML=`${s.start}-${s.end}<span class="slot-controls"><input type="checkbox"${s.visible?' checked':''}><input type="checkbox"${s.occupied?' checked':''}><span class="trash-icon" data-date="${ds}" data-start="${s.start}" data-end="${s.end}">🗑️</span></span>`;td.appendChild(div);}); if(slots.length>4){const more=document.createElement('div');more.classList.add('more-link');more.textContent=`Vedi gli altri ${slots.length-4} slot`;more.addEventListener('click',()=>showExtras(ds,slots));td.appendChild(more);} td.addEventListener('dblclick',e=>{e.stopPropagation();selectedDate=ds;slotModal.classList.add('active');}); d++; } tr.appendChild(td);} body.appendChild(tr);}    }
+    function showExtras(date,slots){const list=document.getElementById('extras-list'); list.innerHTML=''; slots.forEach(s=>{const row=document.createElement('div'); row.classList.add(s.occupied?'slot-occupied':'slot-free'); row.innerHTML=`${s.start}-${s.end}<span class="slot-controls"><input type="checkbox"${s.visible?' checked':''}><input type="checkbox"${s.occupied?' checked':''}><span class="trash-icon">🗑️</span></span>`; list.appendChild(row);} ); extrasModal.classList.add('active'); }
+    window.calendar2Date=new Date(); document.getElementById('prev2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()-1);renderCalendar2();}); document.getElementById('next2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()+1);renderCalendar2();}); renderCalendar2();
   </script>
 </body>
 </html>
