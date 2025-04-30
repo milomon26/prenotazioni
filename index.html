@@ -55,7 +55,7 @@
     document.getElementById('menu-button').addEventListener('click', e => {
       e.stopPropagation();
       const ul = document.querySelector('.dropdown-menu .menu-list');
-      ul.style.display = (ul.style.display === 'block') ? 'none' : 'block';
+      ul.style.display = ul.style.display === 'block' ? 'none' : 'block';
     });
 
     // Modal login
@@ -100,7 +100,93 @@
       }
     });
 
-    // (inserisci qui il resto dello script del calendario non modificato)
+    // Calcola Pasqua (Meeus)
+    function calculateEaster(year) {
+      const a = year % 19;
+      const b = Math.floor(year / 100);
+      const c = year % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const L = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * L) / 451);
+      const month = Math.floor((h + L - 7 * m + 114) / 31);
+      const day = ((h + L - 7 * m + 114) % 31) + 1;
+      return new Date(year, month - 1, day);
+    }
+
+    // Festività italiane
+    function getItalianHolidays(year) {
+      const easter = calculateEaster(year);
+      const easterMon = new Date(easter);
+      easterMon.setDate(easter.getDate() + 1);
+      const fixed = [
+        new Date(year, 0, 1), new Date(year, 0, 6),
+        new Date(year, 3, 25), new Date(year, 4, 1),
+        new Date(year, 5, 2), new Date(year, 7, 15),
+        new Date(year, 10, 1), new Date(year, 11, 8),
+        new Date(year, 11, 25), new Date(year, 11, 26)
+      ];
+      return [easter, easterMon, ...fixed].map(d => {
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${mm}-${dd}`;
+      });
+    }
+
+    // Rendering calendar
+    function renderCalendar() {
+      const today = window.calendarDate;
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const holidays = getItalianHolidays(year);
+
+      let mn = today.toLocaleString('it-IT', { month: 'long' });
+      mn = mn.charAt(0).toUpperCase() + mn.slice(1);
+      document.getElementById('month-year').textContent = `${mn} ${year}`;
+
+      const names = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const head = document.getElementById('day-names'); head.innerHTML = '';
+      names.forEach(n => { const th = document.createElement('th'); th.textContent = n; head.appendChild(th); });
+
+      const first = new Date(year, month, 1);
+      const start = (first.getDay() + 6) % 7;
+      const dim = new Date(year, month + 1, 0).getDate();
+      const rows = Math.ceil((start + dim) / 7);
+      const body = document.getElementById('calendar-body'); body.innerHTML = '';
+      let d = 1;
+      for (let i = 0; i < rows; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < 7; j++) {
+          const cell = document.createElement('td');
+          const idx = i * 7 + j;
+          if (idx < start || d > dim) cell.textContent = '';
+          else {
+            const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            cell.textContent = d;
+            if (j === 6) cell.classList.add('sunday');
+            if (holidays.includes(ds)) cell.classList.add('holiday');
+            d++;
+          }
+          row.appendChild(cell);
+        }
+        body.appendChild(row);
+      }
+    }
+
+    // State and controls
+    window.calendarDate = new Date();
+    document.getElementById('prev-month').addEventListener('click', () => {
+      window.calendarDate.setMonth(window.calendarDate.getMonth() - 1);
+      renderCalendar();
+    });
+    document.getElementById('next-month').addEventListener('click', () => {
+      window.calendarDate.setMonth(window.calendarDate.getMonth() + 1);
+      renderCalendar();
+    });
+    renderCalendar();
   </script>
-</body>
-</html>
