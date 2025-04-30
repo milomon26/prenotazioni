@@ -145,19 +145,41 @@
       const first=new Date(y,M,1),offset=(first.getDay()+6)%7,rows=Math.ceil((offset+dim)/7),body=document.getElementById('calendar2-body');body.innerHTML='';let date=1;
       for(let i=0;i<rows;i++){const tr=document.createElement('tr');for(let j=0;j<7;j++){const td=document.createElement('td'),idx=i*7+j;if(idx<offset||date>dim){td.textContent='';}else{const ds=`${y}-${String(M+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;td.innerHTML=`<div class="day-number">${date}</div>`;if(j===6)td.classList.add('sunday');if(holidays.includes(ds))td.classList.add('holiday');const slots=byDay[date]||[];slots.slice(0,4).forEach(s=>{
               const div = document.createElement('div');
-              div.classList.add(s.occupied?'slot-occupied':'slot-free');
-              // slot text
+              div.classList.add(s.occupied ? 'slot-occupied' : 'slot-free');
               const txt = document.createElement('span');
               txt.textContent = `${s.start}-${s.end}`;
-              // controls container
               const ctr = document.createElement('div'); ctr.classList.add('slot-controls');
-              // visible checkbox
-              const vis = document.createElement('input'); vis.type='checkbox'; vis.checked = s.visible;
-              vis.addEventListener('click', e=> e.stopPropagation());
+
+              const vis = document.createElement('input'); vis.type = 'checkbox'; vis.checked = s.visible;
+              vis.addEventListener('click', e => e.stopPropagation());
               ctr.appendChild(vis);
-              // occupy button
-              const vb = document.createElement('button'); vb.classList.add('occupy-btn'); vb.textContent = s.occupied?'B':'L';
-              vb.addEventListener('click', e=>{ e.stopPropagation(); toggleOccupied(s.id,s); });
+
+              const vb = document.createElement('button'); vb.classList.add('occupy-btn'); vb.textContent = s.occupied ? 'B' : 'L';
+              vb.addEventListener('click', e => { e.stopPropagation(); toggleOccupied(s.id, s); });
+              ctr.appendChild(vb);
+
+              const del = document.createElement('span'); del.classList.add('trash-icon'); del.textContent = '🗑️';
+              del.addEventListener('click', e => { e.stopPropagation(); /* deletion logic here */ });
+              ctr.appendChild(del);
+
+              div.appendChild(txt);
+              div.appendChild(ctr);
+
+              div.addEventListener('click', () => {
+                editingId = s.id;
+                editingOccupied = s.occupied;
+                selectedDate = ds;
+                slotTitle.textContent = 'Modifica Slot';
+                document.getElementById('start-hour').value = s.start.split(':')[0];
+                document.getElementById('start-min').value = s.start.split(':')[1];
+                document.getElementById('end-hour').value = s.end.split(':')[0];
+                document.getElementById('end-min').value = s.end.split(':')[1];
+                document.getElementById('slot-visible').checked = s.visible;
+                slotModal.classList.add('active');
+              });
+
+              td.appendChild(div);
+            });
               ctr.appendChild(vb);
               // delete icon
               const del = document.createElement('span'); del.classList.add('trash-icon'); del.textContent='🗑️';
