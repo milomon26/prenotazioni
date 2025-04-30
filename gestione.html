@@ -18,8 +18,8 @@
     .slot-free { background:#d4edda; }
     .slot-occupied { background:#f8d7da; }
     .slot-controls { display:flex; align-items:center; }
-    .trash-icon { cursor:pointer; margin-left:4px; }
     .occupy-btn { margin-left:4px; width:24px; height:24px; border:none; border-radius:4px; cursor:pointer; }
+    .trash-icon { cursor:pointer; margin-left:4px; }
     .more-link { color:#007bff; cursor:pointer; margin-top:4px; display:inline-block; }
     .calendar-container { margin-top: 60px; }
   </style>
@@ -32,49 +32,27 @@
     <ul class="menu-list"><li class="menu-item" id="home-button">Home Cute</li></ul>
   </nav>
 
-  <!-- Slot creation/edit modal -->
-  <div id="slot-modal" class="modal">
-    <div class="modal-content">
-      <span id="close-slot-modal" class="close">×</span>
-      <h2 id="slot-modal-title">Nuovo Slot</h2>
-      <div class="form-row">
-        <label>Ora Inizio: <select id="start-hour"></select>:<select id="start-min"></select></label>
-      </div>
-      <div class="form-row">
-        <label>Ora Fine: <select id="end-hour"></select>:<select id="end-min"></select></label>
-      </div>
+  <!-- Slot modal -->
+  <div id="slot-modal" class="modal"><div class="modal-content">
+      <span id="close-slot-modal" class="close">×</span><h2 id="slot-modal-title">Nuovo Slot</h2>
+      <div class="form-row"><label>Ora Inizio: <select id="start-hour"></select>:<select id="start-min"></select></label></div>
+      <div class="form-row"><label>Ora Fine: <select id="end-hour"></select>:<select id="end-min"></select></label></div>
       <div class="form-row"><label><input type="checkbox" id="slot-visible"> Visibile</label></div>
-      <div class="form-actions">
-        <button id="slot-save" class="menu-button">Salva</button>
-        <button id="slot-cancel" class="menu-button">Annulla</button>
-      </div>
-    </div>
-  </div>
+      <div class="form-actions"><button id="slot-save" class="menu-button">Salva</button><button id="slot-cancel" class="menu-button">Annulla</button></div>
+    </div></div>
 
-  <!-- "More slots" modal -->
-  <div id="extras-modal" class="modal">
-    <div class="modal-content">
-      <span id="close-extras-modal" class="close">×</span>
-      <h2>Altri Slot</h2>
-      <div id="extras-list"></div>
-    </div>
-  </div>
+  <!-- Extras modal -->
+  <div id="extras-modal" class="modal"><div class="modal-content">
+      <span id="close-extras-modal" class="close">×</span><h2>Altri Slot</h2><div id="extras-list"></div>
+    </div></div>
 
   <!-- Calendar -->
   <div class="calendar-container">
-    <div class="calendar-header">
-      <button id="prev2-month">←</button>
-      <h2 id="month2-year"></h2>
-      <button id="next2-month">→</button>
-    </div>
-    <table class="calendar">
-      <thead><tr id="day2-names"></tr></thead>
-      <tbody id="calendar2-body"></tbody>
-    </table>
+    <div class="calendar-header"><button id="prev2-month">←</button><h2 id="month2-year"></h2><button id="next2-month">→</button></div>
+    <table class="calendar"><thead><tr id="day2-names"></tr></thead><tbody id="calendar2-body"></tbody></table>
   </div>
 
   <script>
-    // Firebase init
     const firebaseConfig = { apiKey:"...",authDomain:"...",projectId:"prenotazioni-app-87467",storageBucket:"...",messagingSenderId:"...",appId:"..." };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -85,120 +63,42 @@
     document.getElementById('home-button').addEventListener('click',()=>location.href='index.html');
 
     // Time selects
-    const hours=Array.from({length:14},(_,i)=>i+7),mins=['00','15','30','45'];
+    const hours=Array.from({length:14},(_,i)=>i+7), mins=['00','15','30','45'];
     function populate(h,m){const H=document.getElementById(h),M=document.getElementById(m);hours.forEach(x=>H.add(new Option(x,x)));mins.forEach(x=>M.add(new Option(x,x)));}
     populate('start-hour','start-min');populate('end-hour','end-min');
 
-    // Modal logic
-    const slotModal=document.getElementById('slot-modal'), slotTitle=document.getElementById('slot-modal-title');let editingId=null, selectedDate;
+    // Modal
+    const slotModal=document.getElementById('slot-modal'), slotTitle=document.getElementById('slot-modal-title');let editingId=null, editingOccupied=false, selectedDate;
     document.getElementById('close-slot-modal').addEventListener('click',()=>slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click',()=>slotModal.classList.remove('active'));
+    const extrasModal=document.getElementById('extras-modal');document.getElementById('close-extras-modal').addEventListener('click',()=>extrasModal.classList.remove('active'));
 
-    const extrasModal=document.getElementById('extras-modal');
-    document.getElementById('close-extras-modal').addEventListener('click',()=>extrasModal.classList.remove('active'));
-
-    // Save or update slot
     document.getElementById('slot-save').addEventListener('click',async()=>{
       const start=`${document.getElementById('start-hour').value}:${document.getElementById('start-min').value}`;
       const end=`${document.getElementById('end-hour').value}:${document.getElementById('end-min').value}`;
       const visible=document.getElementById('slot-visible').checked;
       const data={date:selectedDate,start,end,visible,occupied:editingOccupied};
-      const id= editingId||`${selectedDate}_${start.replace(':','')}_${end.replace(':','')}`;
+      const id=editingId||`${selectedDate}_${start.replace(':','')}_${end.replace(':','')}`;
       await db.collection('slots').doc(id).set(data);
-      slotModal.classList.remove('active'); editingId=null;
-      renderCalendar2();
+      slotModal.classList.remove('active');editingId=null;renderCalendar2();
     });
 
-    // Toggle occupied via button
-    async function toggleOccupied(id,s){ const ref=db.collection('slots').doc(id); await ref.update({occupied:!s.occupied}); renderCalendar2(); }
+    async function toggleOccupied(id,s){await db.collection('slots').doc(id).update({occupied:!s.occupied});renderCalendar2();}
 
-    // Easter calculation (Meeus)
-    function calculateEaster(year) {
-      const a = year % 19, b = Math.floor(year/100), c = year % 100;
-      const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3);
-      const h = (19*a + b - d - g + 15) % 30;
-      const i = Math.floor(c/4), k = c % 4;
-      const L = (32 + 2*e + 2*i - h - k) % 7;
-      const m = Math.floor((a + 11*h + 22*L)/451);
-      const month = Math.floor((h + L - 7*m + 114)/31);
-      const day = ((h + L - 7*m + 114) % 31) + 1;
-      return new Date(year, month-1, day);
-    }
+    function calculateEaster(year){const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,L=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*L)/451),M=Math.floor((h+L-7*m+114)/31),D=((h+L-7*m+114)%31)+1;return new Date(year,M-1,D);}    
+    function getItalianHolidays(year){const easter=calculateEaster(year),easterMon=new Date(easter);easterMon.setDate(easter.getDate()+1);const fixed=[new Date(year,0,1),new Date(year,0,6),new Date(year,3,25),new Date(year,4,1),new Date(year,5,2),new Date(year,7,15),new Date(year,10,1),new Date(year,11,8),new Date(year,11,25),new Date(year,11,26)];return [easter,easterMon,...fixed].map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}    
 
-    function getItalianHolidays(year) {
-      const easter = calculateEaster(year);
-      const easterMon = new Date(easter);
-      easterMon.setDate(easter.getDate()+1);
-      const fixed = [new Date(year,0,1),new Date(year,0,6),new Date(year,3,25),new Date(year,4,1),new Date(year,5,2),new Date(year,7,15),new Date(year,10,1),new Date(year,11,8),new Date(year,11,25),new Date(year,11,26)];
-      return [easter,easterMon,...fixed].map(d=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
-    }
-
-    // Render calendar
     async function renderCalendar2(){
-      const today=window.calendar2Date, y=today.getFullYear(),M=today.getMonth();
-      const holidays=getItalianHolidays(y), dim=new Date(y,M+1,0).getDate();
+      const today=window.calendar2Date,y=today.getFullYear(),M=today.getMonth();
+      const holidays=getItalianHolidays(y),dim=new Date(y,M+1,0).getDate();
       const sD=`${y}-${String(M+1).padStart(2,'0')}-01`,eD=`${y}-${String(M+1).padStart(2,'0')}-${String(dim).padStart(2,'0')}`;
       const snap=await db.collection('slots').where('date','>=',sD).where('date','<=',eD).get();
       const byDay={};snap.docs.forEach(d=>{const s=d.data(),day=Number(s.date.split('-')[2]);(byDay[day]||(byDay[day]=[])).push({...s,id:d.id});});
       document.getElementById('month2-year').textContent=today.toLocaleString('it-IT',{month:'long'}).replace(/^./,c=>c.toUpperCase())+` ${y}`;
       const head=document.getElementById('day2-names');head.innerHTML='';['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'].forEach(d=>{const th=document.createElement('th');th.textContent=d;head.appendChild(th);});
       const first=new Date(y,M,1),offset=(first.getDay()+6)%7,rows=Math.ceil((offset+dim)/7),body=document.getElementById('calendar2-body');body.innerHTML='';let date=1;
-      for(let i=0;i<rows;i++){const tr=document.createElement('tr');for(let j=0;j<7;j++){const td=document.createElement('td'),idx=i*7+j;if(idx<offset||date>dim){td.textContent='';}else{const ds=`${y}-${String(M+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;td.innerHTML=`<div class="day-number">${date}</div>`;if(j===6)td.classList.add('sunday');if(holidays.includes(ds))td.classList.add('holiday');const slots=byDay[date]||[];slots.slice(0,4).forEach(s=>{
-              const div = document.createElement('div');
-              div.classList.add(s.occupied ? 'slot-occupied' : 'slot-free');
-              const txt = document.createElement('span');
-              txt.textContent = `${s.start}-${s.end}`;
-              const ctr = document.createElement('div'); ctr.classList.add('slot-controls');
-
-              const vis = document.createElement('input'); vis.type = 'checkbox'; vis.checked = s.visible;
-              vis.addEventListener('click', e => e.stopPropagation());
-              ctr.appendChild(vis);
-
-              const vb = document.createElement('button'); vb.classList.add('occupy-btn'); vb.textContent = s.occupied ? 'B' : 'L';
-              vb.addEventListener('click', e => { e.stopPropagation(); toggleOccupied(s.id, s); });
-              ctr.appendChild(vb);
-
-              const del = document.createElement('span'); del.classList.add('trash-icon'); del.textContent = '🗑️';
-              del.addEventListener('click', e => { e.stopPropagation(); /* deletion logic here */ });
-              ctr.appendChild(del);
-
-              div.appendChild(txt);
-              div.appendChild(ctr);
-
-              div.addEventListener('click', () => {
-                editingId = s.id;
-                editingOccupied = s.occupied;
-                selectedDate = ds;
-                slotTitle.textContent = 'Modifica Slot';
-                document.getElementById('start-hour').value = s.start.split(':')[0];
-                document.getElementById('start-min').value = s.start.split(':')[1];
-                document.getElementById('end-hour').value = s.end.split(':')[0];
-                document.getElementById('end-min').value = s.end.split(':')[1];
-                document.getElementById('slot-visible').checked = s.visible;
-                slotModal.classList.add('active');
-              });
-
-              td.appendChild(div);
-            });
-              ctr.appendChild(vb);
-              // delete icon
-              const del = document.createElement('span'); del.classList.add('trash-icon'); del.textContent='🗑️';
-              del.addEventListener('click', e=>{ e.stopPropagation(); /* deletion logic here */ });
-              ctr.appendChild(del);
-              div.appendChild(txt);
-              div.appendChild(ctr);
-              // slot click opens modal
-              div.addEventListener('click', ()=>{ editingId=s.id; editingOccupied=s.occupied; selectedDate=ds; slotTitle.textContent='Modifica Slot';
-                document.getElementById('start-hour').value=s.start.split(':')[0];
-                document.getElementById('start-min').value=s.start.split(':')[1];
-                document.getElementById('end-hour').value=s.end.split(':')[0];
-                document.getElementById('end-min').value=s.end.split(':')[1];
-                document.getElementById('slot-visible').checked=s.visible;
-                slotModal.classList.add('active');
-              });
-              td.appendChild(div);
-            });editingOccupied=s.occupied;selectedDate=ds;slotTitle.textContent='Modifica Slot';document.getElementById('start-hour').value=s.start.split(':')[0];document.getElementById('start-min').value=s.start.split(':')[1];document.getElementById('end-hour').value=s.end.split(':')[0];document.getElementById('end-min').value=s.end.split(':')[1];document.getElementById('slot-visible').checked=s.visible;slotModal.classList.add('active');});td.appendChild(div);});if(slots.length>4){const more=document.createElement('div');more.classList.add('more-link');more.textContent=`Vedi gli altri ${slots.length-4} slot`;more.addEventListener('click',()=>showExtras(ds,slots.slice(4)));td.appendChild(more);}td.addEventListener('dblclick',e=>{e.stopPropagation();editingId=null;slotTitle.textContent='Nuovo Slot';selectedDate=ds;slotModal.classList.add('active');});date++;}tr.appendChild(td);}body.appendChild(tr);}    }
-    function showExtras(date,slots){const list=document.getElementById('extras-list');list.innerHTML='';slots.forEach(s=>{const row=document.createElement('div');row.classList.add(s.occupied?'slot-occupied':'slot-free');row.textContent=`${s.start}-${s.end}`;const ctr=document.createElement('div');ctr.classList.add('slot-controls');const vb=document.createElement('button');vb.classList.add('occupy-btn');vb.textContent=s.occupied?'B':'L';vb.addEventListener('click',()=>toggleOccupied(s.id,s));ctr.appendChild(vb);const del=document.createElement('span');del.classList.add('trash-icon');del.textContent='🗑️';ctr.appendChild(del);row.appendChild(ctr);row.addEventListener('click',()=>{editingId=s.id;editingOccupied=s.occupied;selectedDate=date;slotTitle.textContent='Modifica Slot';document.getElementById('start-hour').value=s.start.split(':')[0];document.getElementById('start-min').value=s.start.split(':')[1];document.getElementById('end-hour').value=s.end.split(':')[0];document.getElementById('end-min').value=s.end.split(':')[1];document.getElementById('slot-visible').checked=s.visible;slotModal.classList.add('active');});list.appendChild(row);});extrasModal.classList.add('active');}
+      for(let i=0;i<rows;i++){const tr=document.createElement('tr');for(let j=0;j<7;j++){const td=document.createElement('td'),idx=i*7+j;if(idx<offset||date>dim){td.textContent='';}else{const ds=`${y}-${String(M+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;td.innerHTML=`<div class="day-number">${date}</div>`;if(j===6)td.classList.add('sunday');if(holidays.includes(ds))td.classList.add('holiday');const slots=byDay[date]||[];slots.slice(0,4).forEach(s=>{const div=document.createElement('div');div.classList.add(s.occupied?'slot-occupied':'slot-free');const txt=document.createElement('span');txt.textContent=`${s.start}-${s.end}`;const ctr=document.createElement('div');ctr.classList.add('slot-controls');const vis=document.createElement('input');vis.type='checkbox';vis.checked=s.visible;vis.addEventListener('click',e=>e.stopPropagation());ctr.appendChild(vis);const vb=document.createElement('button');vb.classList.add('occupy-btn');vb.textContent=s.occupied?'B':'L';vb.addEventListener('click',e=>{e.stopPropagation();toggleOccupied(s.id,s);});ctr.appendChild(vb);const del=document.createElement('span');del.classList.add('trash-icon');del.textContent='🗑️';del.addEventListener('click',e=>e.stopPropagation());ctr.appendChild(del);div.appendChild(txt);div.appendChild(ctr);div.addEventListener('click',()=>{editingId=s.id;editingOccupied=s.occupied;selectedDate=ds;slotTitle.textContent='Modifica Slot';document.getElementById('start-hour').value=s.start.split(':')[0];document.getElementById('start-min').value=s.start.split(':')[1];document.getElementById('end-hour').value=s.end.split(':')[0];document.getElementById('end-min').value=s.end.split(':')[1];document.getElementById('slot-visible').checked=s.visible;slotModal.classList.add('active');});td.appendChild(div);});if(slots.length>4){const more=document.createElement('div');more.classList.add('more-link');more.textContent=`Vedi gli altri ${slots.length-4} slot`;more.addEventListener('click',()=>showExtras(ds,slots.slice(4)));td.appendChild(more);}td.addEventListener('dblclick',e=>{e.stopPropagation();editingId=null;slotTitle.textContent='Nuovo Slot';selectedDate=ds;slotModal.classList.add('active');});date++;}tr.appendChild(td);}body.appendChild(tr);}    }
+    function showExtras(date,slots){const list=document.getElementById('extras-list');list.innerHTML='';slots.forEach(s=>{const row=document.createElement('div');row.classList.add(s.occupied?'slot-occupied':'slot-free');row.textContent=`${s.start}-${s.end}`;const ctr=document.createElement('div');ctr.classList.add('slot-controls');const vb=document.createElement('button');vb.classList.add('occupy-btn');vb.textContent=s.occupied?'B':'L';vb.addEventListener('click',e=>{e.stopPropagation();toggleOccupied(s.id,s);});ctr.appendChild(vb);const del=document.createElement('span');del.classList.add('trash-icon');del.textContent='🗑️';del.addEventListener('click',e=>e.stopPropagation());ctr.appendChild(del);row.appendChild(ctr);row.addEventListener('click',()=>{editingId=s.id;editingOccupied=s.occupied;selectedDate=date;slotTitle.textContent='Modifica Slot';document.getElementById('start-hour').value=s.start.split(':')[0];document.getElementById('start-min').value=s.start.split(':')[1];document.getElementById('end-hour').value=s.end.split(':')[0];document.getElementById('end-min').value=s.end.split(':')[1];document.getElementById('slot-visible').checked=s.visible;slotModal.classList.add('active');});list.appendChild(row);});extrasModal.classList.add('active');}
     window.calendar2Date=new Date();document.getElementById('prev2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()-1);renderCalendar2();});document.getElementById('next2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()+1);renderCalendar2();});renderCalendar2();
   </script>
 </body>
