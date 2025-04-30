@@ -1,0 +1,64 @@
+<!-- gestione.html -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Cute</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="dropdown-menu">
+    <button class="menu-button">Menu ▼</button>
+    <ul class="menu-list">
+      <li class="menu-item" onclick="window.location.href='index.html'">Home Cute</li>
+    </ul>
+  </nav>
+
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <button id="prev2-month">&#8592;</button>
+      <h2 id="month2-year"></h2>
+      <button id="next2-month">&#8594;</button>
+    </div>
+    <table class="calendar">
+      <thead>
+        <tr id="day2-names"></tr>
+      </thead>
+      <tbody id="calendar2-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Gestione del secondo calendario identico
+    let curr2 = new Date();
+    function renderCalendar2() {
+      const year=curr2.getFullYear(); const month=curr2.getMonth();
+      const holidays=getItalianHolidays(year);
+      let monthName=curr2.toLocaleString('it-IT',{month:'long'});
+      monthName=monthName.charAt(0).toUpperCase()+monthName.slice(1);
+      document.getElementById('month2-year').textContent=`${monthName} ${year}`;
+      const dayNamesRow2=document.getElementById('day2-names'); dayNamesRow2.innerHTML='';
+      ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
+        .forEach(n=>{const th=document.createElement('th');th.textContent=n;dayNamesRow2.appendChild(th);});
+      const first=new Date(year,month,1);
+      const start=(first.getDay()+6)%7; const dim=new Date(year,month+1,0).getDate();
+      const cells=start+dim; const rows=Math.ceil(cells/7);
+      const body2=document.getElementById('calendar2-body'); body2.innerHTML=''; let d=1;
+      for(let i=0;i<rows;i++){ const row=document.createElement('tr');
+        for(let j=0;j<7;j++){ const cell=document.createElement('td'); const idx=i*7+j;
+          if(idx<start||d>dim){cell.textContent='';}
+          else{ const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            cell.textContent=d; if(j===6)cell.classList.add('sunday'); if(holidays.includes(ds))cell.classList.add('holiday'); d++; }
+          row.appendChild(cell);
+        }
+        body2.appendChild(row);
+      }
+    }
+    document.getElementById('prev2-month').addEventListener('click',()=>{curr2.setMonth(curr2.getMonth()-1);renderCalendar2();});
+    document.getElementById('next2-month').addEventListener('click',()=>{curr2.setMonth(curr2.getMonth()+1);renderCalendar2();});
+    renderCalendar2();
+  </script>
+
+</body>
+</html>
