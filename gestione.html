@@ -102,14 +102,12 @@
     document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-save').addEventListener('click', async () => {
-      // Read values
       const startH = document.getElementById('start-hour').value;
       const startM = document.getElementById('start-min').value;
       const endH = document.getElementById('end-hour').value;
       const endM = document.getElementById('end-min').value;
       const visible = document.getElementById('slot-visible').checked;
       const occupied = document.getElementById('slot-occupied').checked;
-      // Save to Firestore
       try {
         await db.collection('slot').add({
           date: selectedDate,
@@ -119,20 +117,11 @@
           occupied
         });
         slotModal.classList.remove('active');
-        // Refresh calendar
         await renderCalendar2();
       } catch (e) {
         console.error('Errore salvataggio slot:', e);
         alert('Impossibile salvare lo slot.');
       }
-    });
-    let selectedDate;
-    document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
-    document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
-    document.getElementById('slot-save').addEventListener('click', async () => {
-      slotModal.classList.remove('active');
-      // Aggiorna il calendario e attendi il completamento
-      await renderCalendar2();
     });
 
     // Calendar rendering functions
@@ -193,27 +182,27 @@
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const rows = Math.ceil((start + daysInMonth) / 7);
       const body = document.getElementById('calendar2-body'); body.innerHTML = '';
-      let date = 1;
+      let dateCounter = 1;
       for (let i = 0; i < rows; i++) {
         const tr = document.createElement('tr');
         for (let j = 0; j < 7; j++) {
           const td = document.createElement('td');
           const idx = i * 7 + j;
-          if (idx < start || date > daysInMonth) {
+          if (idx < start || dateCounter > daysInMonth) {
             td.textContent = '';
           } else {
-            td.innerHTML = `<div class="day-number">${date}</div>`;
-            (slotsByDay[date] || []).forEach(s => {
+            td.innerHTML = `<div class="day-number">${dateCounter}</div>`;
+            (slotsByDay[dateCounter] || []).forEach(s => {
               const div = document.createElement('div');
               div.classList.add(s.occupied ? 'slot-occupied' : 'slot-free');
               div.textContent = `${s.start}-${s.end}${s.visible ? ' ✓' : ''}`;
               td.appendChild(div);
             });
             td.addEventListener('dblclick', () => {
-              selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+              selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(dateCounter).padStart(2, '0')}`;
               slotModal.classList.add('active');
             });
-            date++;
+            dateCounter++;
           }
           tr.appendChild(td);
         }
