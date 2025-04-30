@@ -6,62 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestione Cute</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    /* Ensure modal is on top and clickable */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal.active {
-      display: flex;
-    }
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      position: relative;
-      min-width: 300px;
-      pointer-events: auto;
-      z-index: 1001;
-    }
-    .close {
-      position: absolute;
-      top: 10px; right: 10px;
-      cursor: pointer;
-    }
-  </style>
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <!-- Menu -->
+  <!-- Menu a tendina click-to-open -->
   <nav class="dropdown-menu">
     <button class="menu-button" id="menu-button-2">Menu</button>
     <ul class="menu-list">
       <li class="menu-item" id="home-button">Home Cute</li>
     </ul>
   </nav>
-
-  <!-- Slot Modal -->
-  <div id="slot-modal" class="modal">
-    <div class="modal-content">
-      <span id="close-slot-modal" class="close">×</span>
-      <h2>Nuovo Slot</h2>
-      <label>Ora Inizio: <select id="start-hour"></select>:<select id="start-min"></select></label><br>
-      <label>Ora Fine: <select id="end-hour"></select>:<select id="end-min"></select></label><br>
-      <label><input type="checkbox" id="slot-visible"> Visibile</label><br>
-      <label><input type="checkbox" id="slot-occupied"> Occupato</label><br>
-      <button id="slot-save" class="menu-button">Salva</button>
-      <button id="slot-cancel" class="menu-button">Annulla</button>
-    </div>
-  </div>
 
   <!-- Calendario Gestione -->
   <div class="calendar-container">
@@ -71,7 +27,9 @@
       <button id="next2-month">→</button>
     </div>
     <table class="calendar">
-      <thead><tr id="day2-names"></tr></thead>
+      <thead>
+        <tr id="day2-names"></tr>
+      </thead>
       <tbody id="calendar2-body"></tbody>
     </table>
   </div>
@@ -89,7 +47,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Menu
+    // Menu click-to-open
     document.addEventListener('click', () => {
       document.querySelectorAll('.dropdown-menu .menu-list').forEach(ul => ul.style.display = 'none');
     });
@@ -100,101 +58,59 @@
     });
     document.getElementById('home-button').addEventListener('click', () => window.location.href = 'index.html');
 
-    // Time selects
-    const hours = Array.from({ length: 14 }, (_, i) => i + 7);
-    const mins = ['00','15','30','45'];
-    function populateTime(hourId, minId) {
-      const hSel = document.getElementById(hourId);
-      const mSel = document.getElementById(minId);
-      hours.forEach(h => hSel.add(new Option(h, h)));
-      mins.forEach(m => mSel.add(new Option(m, m)));
-    }
-    populateTime('start-hour','start-min');
-    populateTime('end-hour','end-min');
-
-    // Modal logic
-    const slotModal = document.getElementById('slot-modal');
-    let selectedDate;
-    document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
-    document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
-
-    document.getElementById('slot-save').addEventListener('click', async () => {
-      const startH = document.getElementById('start-hour').value;
-      const startM = document.getElementById('start-min').value;
-      const endH = document.getElementById('end-hour').value;
-      const endM = document.getElementById('end-min').value;
-      const visible = document.getElementById('slot-visible').checked;
-      const occupied = document.getElementById('slot-occupied').checked;
-      try {
-        await db.collection('slot').add({ date: selectedDate, start: `${startH}:${startM}`, end: `${endH}:${endM}`, visible, occupied });
-        slotModal.classList.remove('active');
-        window.calendar2Date = new Date(selectedDate);
-        await renderCalendar2();
-      } catch (e) {
-        console.error(e);
-        alert('Errore salvataggio slot');
-      }
-    });
-
-    // Holidays and calendar
+    // Easter & Holidays
     function calculateEaster(year) { /* Meeus algorithm */ }
     function getItalianHolidays(year) { /* returns array of YYYY-MM-DD */ }
 
-    async function renderCalendar2() {
-      const year = calendar2Date.getFullYear();
-      const month = calendar2Date.getMonth();
-      const daysInMonth = new Date(year, month+1, 0).getDate();
-      const startDate = `${year}-${String(month+1).padStart(2,'0')}-01`;
-      const endDate = `${year}-${String(month+1).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
-      let slotsSnap;
-      try {
-        slotsSnap = await db.collection('slot').where('date','>=',startDate).where('date','<=',endDate).get();
-      } catch { return; }
-      const slotsByDay = {};
-      slotsSnap.docs.forEach(d => {
-        const s = d.data();
-        const day = Number(s.date.split('-')[2]);
-        if (!slotsByDay[day]) slotsByDay[day] = [];
-        slotsByDay[day].push(s);
-      });
+    // Render calendar (copied from index)
+    function renderCalendar2() {
+      const today = window.calendar2Date;
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const holidays = getItalianHolidays(year);
 
-      // render header
-      const mn = calendar2Date.toLocaleString('it-IT',{month:'long'});
-      document.getElementById('month2-year').textContent = mn.charAt(0).toUpperCase()+mn.slice(1)+' '+year;
+      let mn = today.toLocaleString('it-IT', { month: 'long' });
+      mn = mn.charAt(0).toUpperCase() + mn.slice(1);
+      document.getElementById('month2-year').textContent = `${mn} ${year}`;
+
+      const names = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
       const head = document.getElementById('day2-names'); head.innerHTML = '';
-      ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'].forEach(d=>{const th=document.createElement('th');th.textContent=d;head.appendChild(th);});
+      names.forEach(n => { const th = document.createElement('th'); th.textContent = n; head.appendChild(th); });
 
-      // render days
-      const firstDay=new Date(year,month,1);
-      const start=(firstDay.getDay()+6)%7;
-      const rows=Math.ceil((start+daysInMonth)/7);
-      const body=document.getElementById('calendar2-body'); body.innerHTML='';
-      let date=1;
-      for(let i=0;i<rows;i++){
-        const tr=document.createElement('tr');
-        for(let j=0;j<7;j++){
-          const td=document.createElement('td');
-          if(i*7+j<start||date>daysInMonth){td.textContent='';}
-          else{
-            td.innerHTML=`<div class='day-number'>${date}</div>`;
-            (slotsByDay[date]||[]).forEach(s=>{
-              const div=document.createElement('div');
-              div.classList.add(s.occupied?'slot-occupied':'slot-free');
-              div.textContent=`${s.start}-${s.end}${s.visible?' ✓':''}`;
-              td.appendChild(div);
-            });
-            td.addEventListener('dblclick',()=>{selectedDate=`${year}-${String(month+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;slotModal.classList.add('active');});
-            date++;
+      const first = new Date(year, month, 1);
+      const start = (first.getDay() + 6) % 7;
+      const dim = new Date(year, month + 1, 0).getDate();
+      const rows = Math.ceil((start + dim) / 7);
+      const body = document.getElementById('calendar2-body'); body.innerHTML = '';
+      let d = 1;
+      for (let i = 0; i < rows; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < 7; j++) {
+          const cell = document.createElement('td');
+          const idx = i * 7 + j;
+          if (idx < start || d > dim) cell.textContent = '';
+          else {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            cell.textContent = d;
+            if (j === 6) cell.classList.add('sunday');
+            if (holidays.includes(dateStr)) cell.classList.add('holiday');
+            d++;
           }
-          tr.appendChild(td);
+          row.appendChild(cell);
         }
-        body.appendChild(tr);
+        body.appendChild(row);
       }
     }
 
-    let calendar2Date = new Date();
-    document.getElementById('prev2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()-1);renderCalendar2();});
-    document.getElementById('next2-month').addEventListener('click',()=>{calendar2Date.setMonth(calendar2Date.getMonth()+1);renderCalendar2();});
+    window.calendar2Date = new Date();
+    document.getElementById('prev2-month').addEventListener('click', () => {
+      window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1);
+      renderCalendar2();
+    });
+    document.getElementById('next2-month').addEventListener('click', () => {
+      window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1);
+      renderCalendar2();
+    });
     renderCalendar2();
   </script>
 </body>
