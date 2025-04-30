@@ -161,22 +161,37 @@
       const year = window.calendar2Date.getFullYear();
       const month = window.calendar2Date.getMonth();
       const holidays = getItalianHolidays(year);
-      const slotsSnap = await db.collection('slot')
-        .where('date', '>=', `${year}-${String(month + 1).padStart(2, '0')}-01`)
-        .where('date', '<=', `${year}-${String(month + 1).padStart(2, '0')}-31`)
-        .get();
+      // Fetch slots from Firestore
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
+      let slotsSnap;
+      try {
+        slotsSnap = await db.collection('slot')
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .get();
+      } catch (e) {
+        console.error('Errore fetching slots:', e);
+        return;
+      }
       const slotsByDay = {};
       slotsSnap.docs.forEach(doc => {
         const s = doc.data();
-        const day = Number(s.date.split('-')[2]);
+        let dateStr = s.date;
+        // support Firestore Timestamp
+        if (dateStr && dateStr.toDate) dateStr = dateStr.toDate().toISOString().slice(0,10);
+        const day = Number(dateStr.split('-')[2]);
         if (!slotsByDay[day]) slotsByDay[day] = [];
         slotsByDay[day].push(s);
       });
+      console.log('Slots by day:', slotsByDay);
+      // Render header
       const mn = window.calendar2Date.toLocaleString('it-IT', { month: 'long' });
       document.getElementById('month2-year').textContent = mn.charAt(0).toUpperCase() + mn.slice(1) + ' ' + year;
       const head = document.getElementById('day2-names'); head.innerHTML = '';
       ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
         .forEach(d => { const th = document.createElement('th'); th.textContent = d; head.appendChild(th); });
+      // Compute grid
       const firstDay = new Date(year, month, 1);
       const start = (firstDay.getDay() + 6) % 7;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -192,7 +207,8 @@
             td.textContent = '';
           } else {
             td.innerHTML = `<div class="day-number">${dateCounter}</div>`;
-            (slotsByDay[dateCounter] || []).forEach(s => {
+            const slots = slotsByDay[dateCounter] || [];
+            slots.forEach(s => {
               const div = document.createElement('div');
               div.classList.add(s.occupied ? 'slot-occupied' : 'slot-free');
               div.textContent = `${s.start}-${s.end}${s.visible ? ' ✓' : ''}`;
@@ -212,6 +228,8 @@
 
     window.calendar2Date = new Date();
     document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1); renderCalendar2(); });
+    document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar2(); });
+    renderCalendar2(); });
     document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar2(); });
     renderCalendar2();
   </script>
