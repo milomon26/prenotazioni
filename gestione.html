@@ -9,9 +9,9 @@
   <style>
     /* Modal overlay */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; pointer-events: none; z-index: 2000; }
-    .modal.active { display: flex; pointer-events: auto; z-index: 2000; }
+    .modal.active { display: flex; pointer-events: auto; }
     .modal-content { background: white; padding: 20px; border-radius: 12px; position: relative; min-width: 320px; pointer-events: auto; z-index: 2001; }
-    .close { position: absolute; right: 10px; top: 10px; cursor: pointer; }
+    .close { position: absolute; top: 10px; right: 10px; cursor: pointer; }
     .form-row { margin-top: 10px; }
     .form-actions { margin-top: 20px; display: flex; justify-content: space-between; }
     .slot-free { background: #d4edda; padding: 4px; border-radius: 4px; margin-top: 4px; }
@@ -36,21 +36,13 @@
       <span id="close-slot-modal" class="close">×</span>
       <h2>Nuovo Slot</h2>
       <div class="form-row">
-        <label>Ora Inizio:
-          <select id="start-hour"></select> : <select id="start-min"></select>
-        </label>
+        <label>Ora Inizio: <select id="start-hour"></select> : <select id="start-min"></select></label>
       </div>
       <div class="form-row">
-        <label>Ora Fine:
-          <select id="end-hour"></select> : <select id="end-min"></select>
-        </label>
+        <label>Ora Fine: <select id="end-hour"></select> : <select id="end-min"></select></label>
       </div>
-      <div class="form-row">
-        <label><input type="checkbox" id="slot-visible"> Visibile</label>
-      </div>
-      <div class="form-row">
-        <label><input type="checkbox" id="slot-occupied"> Occupato</label>
-      </div>
+      <div class="form-row"><label><input type="checkbox" id="slot-visible"> Visibile</label></div>
+      <div class="form-row"><label><input type="checkbox" id="slot-occupied"> Occupato</label></div>
       <div class="form-actions">
         <button id="slot-save" class="menu-button">Salva</button>
         <button id="slot-cancel" class="menu-button">Annulla</button>
@@ -66,9 +58,7 @@
       <button id="next2-month">→</button>
     </div>
     <table class="calendar">
-      <thead>
-        <tr id="day2-names"></tr>
-      </thead>
+      <thead><tr id="day2-names"></tr></thead>
       <tbody id="calendar2-body"></tbody>
     </table>
   </div>
@@ -131,63 +121,51 @@
       slotModal.classList.remove('active');
       await renderCalendar2();
     });
-        } else {
-          alert('Slot già esistente per questo orario.');
-        }
-      } catch (err) {
-        console.error('Errore salvataggio slot:', err);
-      }
-      slotModal.classList.remove('active');
-      await renderCalendar2();
-      } catch (err) {
-        console.error('Errore salvataggio slot:', err);
-      }
-      slotModal.classList.remove('active');
-      await renderCalendar2();
-    });
 
     // Holidays functions
     function calculateEaster(year) {
-      const a = year % 19, b = Math.floor(year/100), c = year % 100;
-      const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3);
-      const h = (19*a + b - d - g + 15) % 30;
-      const i = Math.floor(c/4), k = c % 4;
-      const L = (32 + 2*e + 2*i - h - k) % 7;
-      const m = Math.floor((a + 11*h + 22*L)/451);
-      const month = Math.floor((h+L-7*m+114)/31);
-      const day = ((h+L-7*m+114) % 31) + 1;
-      return new Date(year, month-1, day);
+      const a = year % 19;
+      const b = Math.floor(year / 100);
+      const c = year % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const L = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * L) / 451);
+      const month = Math.floor((h + L - 7 * m + 114) / 31);
+      const day = ((h + L - 7 * m + 114) % 31) + 1;
+      return new Date(year, month - 1, day);
     }
     function getItalianHolidays(year) {
       const easter = calculateEaster(year);
       const easterMon = new Date(easter);
-      easterMon.setDate(easter.getDate()+1);
+      easterMon.setDate(easter.getDate() + 1);
       const fixed = [
-        new Date(year,0,1), new Date(year,0,6),
-        new Date(year,3,25), new Date(year,4,1),
-        new Date(year,5,2), new Date(year,7,15),
-        new Date(year,10,1), new Date(year,11,8),
-        new Date(year,11,25), new Date(year,11,26)
+        new Date(year, 0, 1), new Date(year, 0, 6),
+        new Date(year, 3, 25), new Date(year, 4, 1),
+        new Date(year, 5, 2), new Date(year, 7, 15),
+        new Date(year, 10, 1), new Date(year, 11, 8),
+        new Date(year, 11, 25), new Date(year, 11, 26)
       ];
-      return [easter, easterMon, ...fixed].map(d =>
-        `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-      );
+      return [easter, easterMon, ...fixed].map(d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
     }
 
     // Render calendar and slots
     async function renderCalendar2() {
       const today = window.calendar2Date;
-      const y = today.getFullYear(), M = today.getMonth();
+      const y = today.getFullYear();
+      const M = today.getMonth();
       const holidays = getItalianHolidays(y);
-      const dim = new Date(y, M+1, 0).getDate();
+      const dim = new Date(y, M + 1, 0).getDate();
       const startDate = `${y}-${String(M+1).padStart(2,'0')}-01`;
       const endDate = `${y}-${String(M+1).padStart(2,'0')}-${String(dim).padStart(2,'0')}`;
       let snap;
       try {
-        snap = await db.collection('slots')
-          .where('date','>=',startDate)
-          .where('date','<=',endDate)
-          .get();
+        snap = await db.collection('slots').where('date', '>=', startDate).where('date', '<=', endDate).get();
       } catch {
         snap = { docs: [] };
       }
@@ -200,41 +178,42 @@
       });
 
       // Header
-      document.getElementById('month2-year').textContent =
-        today.toLocaleString('it-IT',{month:'long'})
-          .replace(/^./,c=>c.toUpperCase()) + ` ${y}`;
-      const head = document.getElementById('day2-names'); head.innerHTML = '';
-      ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-        .forEach(n => { const th = document.createElement('th'); th.textContent = n; head.appendChild(th); });
+      document.getElementById('month2-year').textContent = today.toLocaleString('it-IT', { month: 'long' }).replace(/^./, c => c.toUpperCase()) + ` ${y}`;
+      const head = document.getElementById('day2-names');
+      head.innerHTML = '';
+      ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'].forEach(n => {
+        const th = document.createElement('th');
+        th.textContent = n;
+        head.appendChild(th);
+      });
 
       // Body
       const firstDay = new Date(y, M, 1);
       const start = (firstDay.getDay() + 6) % 7;
       const rows = Math.ceil((start + dim) / 7);
-      const body = document.getElementById('calendar2-body'); body.innerHTML = '';
+      const body = document.getElementById('calendar2-body');
+      body.innerHTML = '';
       let date = 1;
       for (let i = 0; i < rows; i++) {
         const tr = document.createElement('tr');
         for (let j = 0; j < 7; j++) {
           const td = document.createElement('td');
-          const idx = i*7 + j;
+          const idx = i * 7 + j;
           if (idx < start || date > dim) {
             td.textContent = '';
           } else {
             td.innerHTML = `<div class="day-number">${date}</div>`;
-            if (j===6) td.classList.add('sunday');
+            if (j === 6) td.classList.add('sunday');
             const ds = `${y}-${String(M+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
             if (holidays.includes(ds)) td.classList.add('holiday');
 
-            // slots
-            (slotsByDay[date]||[]).forEach(s => {
+            (slotsByDay[date] || []).forEach(s => {
               const el = document.createElement('div');
-              el.classList.add(s.occupied ? 'slot-occupied':'slot-free');
-              el.textContent = `${s.start}-${s.end}${s.visible?' ✓':''}`;
+              el.classList.add(s.occupied ? 'slot-occupied' : 'slot-free');
+              el.textContent = `${s.start}-${s.end}${s.visible ? ' ✓' : ''}`;
               td.appendChild(el);
             });
 
-            // dblclick
             td.addEventListener('dblclick', e => {
               e.stopPropagation();
               selectedDate = ds;
@@ -251,8 +230,8 @@
 
     // Init
     window.calendar2Date = new Date();
-    document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth()-1); renderCalendar2(); });
-    document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth()+1); renderCalendar2(); });
+    document.getElementById('prev2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() - 1); renderCalendar2(); });
+    document.getElementById('next2-month').addEventListener('click', () => { window.calendar2Date.setMonth(window.calendar2Date.getMonth() + 1); renderCalendar2(); });
     renderCalendar2();
   </script>
 </body>
