@@ -69,7 +69,14 @@
     function hideModal() { modal.classList.remove('active'); }
 
     // Firebase init
-    const firebaseConfig = { apiKey: "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco", authDomain: "prenotazioni-app-87467.firebaseapp.com", projectId: "prenotazioni-app-87467", storageBucket: "prenotazioni-app-87467.firebasestorage.app", messagingSenderId: "322391103742", appId: "1:322391103742:web:6f74e033b57281bdaaedaf" };
+    const firebaseConfig = {
+      apiKey: "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
+      authDomain: "prenotazioni-app-87467.firebaseapp.com",
+      projectId: "prenotazioni-app-87467",
+      storageBucket: "prenotazioni-app-87467.firebasestorage.app",
+      messagingSenderId: "322391103742",
+      appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -93,54 +100,7 @@
       }
     });
 
-    // ... (resto script calendario inalterato) ...
-  </script>
-
-<!-- gestione.html -->
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestione Cute</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <nav class="dropdown-menu">
-    <button class="menu-button" id="menu-button-2">Menu</button>
-    <ul class="menu-list">
-      <li class="menu-item" id="home-button">Home Cute</li>
-    </ul>
-  </nav>
-
-  <!-- Calendario (stesso script di prima) -->
-  <div class="calendar-container">
-    <div class="calendar-header">
-      <button id="prev2-month">←</button>
-      <h2 id="month2-year"></h2>
-      <button id="next2-month">→</button>
-    </div>
-    <table class="calendar">
-      <thead>
-        <tr id="day2-names"></tr>
-      </thead>
-      <tbody id="calendar2-body"></tbody>
-    </table>
-  </div>
-
-  <script>
-    // Menu gestione click-to-open
-    document.addEventListener('click', () => {
-      document.querySelectorAll('.dropdown-menu .menu-list').forEach(ul => ul.style.display = 'none');
-    });
-    document.getElementById('menu-button-2').addEventListener('click', e => {
-      e.stopPropagation();
-      const ul = document.querySelector('.dropdown-menu .menu-list');
-      ul.style.display = (ul.style.display === 'block') ? 'none' : 'block';
-    });
-    document.getElementById('home-button').addEventListener('click', () => window.location.href = 'index.html');
-
-    // ... (script renderCalendar2 come prima) ...
+    // (inserisci qui il resto dello script del calendario non modificato)
   </script>
 </body>
 </html>
