@@ -43,22 +43,19 @@
       messagingSenderId: "322391103742",
       appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
-    // Inizializza Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Gestione login: verifica presenza nel documento 'admins'
+    // Gestione login
     document.getElementById('login-button').addEventListener('click', async () => {
       try {
         const email = prompt('Inserisci email:');
         const password = prompt('Inserisci password:');
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
-        // Controlla Firestore: collezione 'admins', documento con uid
         const adminDoc = await db.collection('admins').doc(user.uid).get();
         if (adminDoc.exists) {
-          // Login riuscito, reindirizza a gestione.html
           window.location.href = 'gestione.html';
         } else {
           alert('Non autorizzato: utente non presente in admins');
@@ -69,7 +66,7 @@
       }
     });
 
-    // Calcola la data di Pasqua (algoritmo di Meeus)
+    // Funzioni calendario
     function calculateEaster(year) {
       const a = year % 19;
       const b = Math.floor(year / 100);
@@ -87,79 +84,52 @@
       const day = ((h + L - 7 * m + 114) % 31) + 1;
       return new Date(year, month - 1, day);
     }
-
-    // Restituisce le festività italiane (formato YYYY-MM-DD)
     function getItalianHolidays(year) {
       const easter = calculateEaster(year);
       const easterMonday = new Date(easter);
       easterMonday.setDate(easterMonday.getDate() + 1);
       const raw = [
-        new Date(year, 0, 1),
-        new Date(year, 0, 6),
-        easter,
-        easterMonday,
-        new Date(year, 3, 25),
-        new Date(year, 4, 1),
-        new Date(year, 5, 2),
-        new Date(year, 7, 15),
-        new Date(year, 10, 1),
-        new Date(year, 11, 8),
-        new Date(year, 11, 25),
-        new Date(year, 11, 26)
+        new Date(year,0,1),new Date(year,0,6),easter,easterMonday,
+        new Date(year,3,25),new Date(year,4,1),new Date(year,5,2),
+        new Date(year,7,15),new Date(year,10,1),new Date(year,11,8),
+        new Date(year,11,25),new Date(year,11,26)
       ];
-      return raw.map(d => {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
+      return raw.map(d=>{
+        const yyyy=d.getFullYear();
+        const mm=String(d.getMonth()+1).padStart(2,'0');
+        const dd=String(d.getDate()).padStart(2,'0');
         return `${yyyy}-${mm}-${dd}`;
       });
     }
-
     let current = new Date();
-
     function renderCalendar() {
-      const year = current.getFullYear();
-      const month = current.getMonth();
-      const holidays = getItalianHolidays(year);
-
-      // Mese con iniziale maiuscola
-      let monthName = current.toLocaleString('it-IT', { month: 'long' });
-      monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-      document.getElementById('month-year').textContent = `${monthName} ${year}`;
-
-      // Nomi dei giorni per intero
-      const names = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
-      const dayNamesRow = document.getElementById('day-names');
-      dayNamesRow.innerHTML = '';
-      names.forEach(name => {
-        const th = document.createElement('th');
-        th.textContent = name;
-        dayNamesRow.appendChild(th);
-      });
-
-      // Calcola righe necessarie
-      const firstDay = new Date(year, month, 1);
-      const startDay = (firstDay.getDay() + 6) % 7;
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const totalCells = startDay + daysInMonth;
-      const rows = Math.ceil(totalCells / 7);
-
-      // Popola il corpo
-      const body = document.getElementById('calendar-body');
-      body.innerHTML = '';
-      let date = 1;
-      for (let i = 0; i < rows; i++) {
-        const row = document.createElement('tr');
-        for (let j = 0; j < 7; j++) {
-          const cell = document.createElement('td');
-          const cellIndex = i * 7 + j;
-          if (cellIndex < startDay || date > daysInMonth) {
-            cell.textContent = '';
-          } else {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-            cell.textContent = date;
-            if (j === 6) cell.classList.add('sunday');
-            if (holidays.includes(dateStr)) cell.classList.add('holiday');
+      const year=current.getFullYear();
+      const month=current.getMonth();
+      const holidays=getItalianHolidays(year);
+      let monthName=current.toLocaleString('it-IT',{month:'long'});
+      monthName=monthName.charAt(0).toUpperCase()+monthName.slice(1);
+      document.getElementById('month-year').textContent=`${monthName} ${year}`;
+      const names=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const dayNamesRow=document.getElementById('day-names'); dayNamesRow.innerHTML='';
+      names.forEach(n=>{const th=document.createElement('th');th.textContent=n;dayNamesRow.appendChild(th);});
+      const firstDay=new Date(year,month,1);
+      const startDay=(firstDay.getDay()+6)%7;
+      const daysInMonth=new Date(year,month+1,0).getDate();
+      const totalCells=startDay+daysInMonth;
+      const rows=Math.ceil(totalCells/7);
+      const body=document.getElementById('calendar-body');body.innerHTML='';
+      let date=1;
+      for(let i=0;i<rows;i++){
+        const row=document.createElement('tr');
+        for(let j=0;j<7;j++){
+          const cell=document.createElement('td');
+          const idx=i*7+j;
+          if(idx<startDay||date>daysInMonth){cell.textContent='';}
+          else{
+            const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+            cell.textContent=date;
+            if(j===6)cell.classList.add('sunday');
+            if(holidays.includes(ds))cell.classList.add('holiday');
             date++;
           }
           row.appendChild(cell);
@@ -167,15 +137,7 @@
         body.appendChild(row);
       }
     }
-
-    document.getElementById('prev-month').addEventListener('click', () => {
-      current.setMonth(current.getMonth() - 1);
-      renderCalendar();
-    });
-    document.getElementById('next-month').addEventListener('click', () => {
-      current.setMonth(current.getMonth() + 1);
-      renderCalendar();
-    });
-
+    document.getElementById('prev-month').addEventListener('click',()=>{current.setMonth(current.getMonth()-1);renderCalendar();});
+    document.getElementById('next-month').addEventListener('click',()=>{current.setMonth(current.getMonth()+1);renderCalendar();});
     renderCalendar();
   </script>
