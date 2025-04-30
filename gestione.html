@@ -112,7 +112,6 @@
     document.getElementById('close-slot-modal').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-cancel').addEventListener('click', () => slotModal.classList.remove('active'));
     document.getElementById('slot-save').addEventListener('click', async () => {
-      // Read form values
       const start = `${document.getElementById('start-hour').value}:${document.getElementById('start-min').value}`;
       const end = `${document.getElementById('end-hour').value}:${document.getElementById('end-min').value}`;
       const visible = document.getElementById('slot-visible').checked;
@@ -123,6 +122,15 @@
         const existing = await docRef.get();
         if (!existing.exists) {
           await docRef.set({ date: selectedDate, start, end, visible, occupied });
+        } else {
+          alert('Slot già esistente per questo orario.');
+        }
+      } catch (err) {
+        console.error('Errore salvataggio slot:', err);
+      }
+      slotModal.classList.remove('active');
+      await renderCalendar2();
+    });
         } else {
           alert('Slot già esistente per questo orario.');
         }
@@ -249,4 +257,3 @@
   </script>
 </body>
 </html>
-
