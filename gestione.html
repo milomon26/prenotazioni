@@ -161,6 +161,10 @@
       const year = window.calendar2Date.getFullYear();
       const month = window.calendar2Date.getMonth();
       const holidays = getItalianHolidays(year);
+      // Compute number of days in month for correct query
+      const monthDays = new Date(year, month + 1, 0).getDate();
+      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(monthDays).padStart(2, '0')}`;
       // Fetch slots from Firestore
       const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
       const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
