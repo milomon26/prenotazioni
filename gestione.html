@@ -91,29 +91,20 @@
 
     function calculateEaster(y){/* Meeus */}
     function getItalianHolidays(y) {
-      // Calcola festività italiane fisse e mobili
       const easter = calculateEaster(y);
       const easterMon = new Date(easter);
       easterMon.setDate(easter.getDate() + 1);
       const fixed = [
-        new Date(y, 0, 1),   // Capodanno
-        new Date(y, 0, 6),   // Epifania
-        new Date(y, 3, 25),  // Festa della Liberazione
-        new Date(y, 4, 1),   // Festa del Lavoro
-        new Date(y, 5, 2),   // Festa della Repubblica
-        new Date(y, 7, 15),  // Ferragosto
-        new Date(y, 10, 1),  // Ognissanti
-        new Date(y, 11, 8),  // Immacolata Concezione
-        new Date(y, 11, 25), // Natale
-        new Date(y, 11, 26)  // Santo Stefano
+        new Date(y, 0, 1), new Date(y, 0, 6),
+        new Date(y, 3, 25), new Date(y, 4, 1),
+        new Date(y, 5, 2), new Date(y, 7, 15),
+        new Date(y, 10, 1), new Date(y, 11, 8),
+        new Date(y, 11, 25), new Date(y, 11, 26)
       ];
-      // Unisci pasqua, lunedì dell'angelo e festività fisse
       const all = [easter, easterMon, ...fixed];
-      // Formatta in 'YYYY-MM-DD'
-      return all.map(d => {
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        return `${d.getFullYear()}-${mm}-${dd}`;
+      return all.map(d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+    }
+-${mm}-${dd}`;
       });
     }catch{return [];} }
 
