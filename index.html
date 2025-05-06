@@ -15,7 +15,7 @@
         id="username" 
         name="username" 
         placeholder="Username" 
-        autocomplete="username"
+        autocomplete="username" 
         required
       >
       <input 
@@ -23,11 +23,10 @@
         id="password" 
         name="password" 
         placeholder="Password" 
-        autocomplete="current-password"
+        autocomplete="current-password" 
         required
       >
       <button type="submit" class="btn">
-        <!-- icona “cute” login -->
         <svg viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" fill="#fff"/>
           <path d="M10 8l4 4-4 4" stroke="#006064" stroke-width="2" fill="none"/>
@@ -39,14 +38,16 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp } 
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore,
       collection,
       query,
       where,
       getDocs
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    } 
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // La tua configurazione Firebase
     const firebaseConfig = {
@@ -58,35 +59,41 @@
       appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
 
-    // Inizializza Firebase e Firestore
+    // Inizializza Firebase & Firestore
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    document.getElementById('login-form').addEventListener('submit', async e => {
+    document.getElementById('login-form')
+      .addEventListener('submit', async e => {
       e.preventDefault();
 
-      // Prendo i valori da form
+      // Recupero valori
       const user = e.target.username.value.trim();
       const pass = e.target.password.value;
-
-      // Debug in console (opzionale)
       console.log('Tentativo login:', user, pass);
 
-      // Query sulla collezione "users"
-      const q = query(
-        collection(db, 'users'),
-        where('username', '==', user),
-        where('password', '==', pass)
-      );
-      const snap = await getDocs(q);
+      try {
+        // Query su users
+        const q = query(
+          collection(db, 'users'),
+          where('username', '==', user),
+          where('password', '==', pass)
+        );
+        const snap = await getDocs(q);
+        console.log('Documenti trovati:', snap.size);
 
-      if (!snap.empty) {
-        // Login OK → vado a calendar.html
-        window.location.href = 'calendar.html';
-      } else {
-        // Altrimenti mostro errore
-        document.getElementById('error-msg').textContent =
-          'Username o password errati';
+        if (!snap.empty) {
+          // Se c'è almeno un doc → redirect
+          window.location.href = 'calendar.html';
+        } else {
+          document.getElementById('error-msg')
+            .textContent = 'Username o password errati';
+        }
+
+      } catch(err) {
+        console.error('Errore Firestore:', err);
+        document.getElementById('error-msg')
+          .textContent = 'Errore interno: ' + err.message;
       }
     });
   </script>
