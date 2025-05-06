@@ -9,8 +9,14 @@
 <body>
   <!-- Topbar -->
   <header class="topbar">
-    <button id="logout-btn" class="btn">…</button>
-    <button id="wizard-btn" class="btn">… Wizard</button>
+    <button id="logout-btn" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2"/></svg>
+      Logout
+    </button>
+    <button id="wizard-btn" class="btn">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      Wizard
+    </button>
   </header>
 
   <!-- Calendario -->
@@ -23,7 +29,6 @@
     <div class="modal-content">
       <button class="close-btn" type="button">&times;</button>
       <h3>Seleziona Date</h3>
-
       <div class="datepicker-group">
         <div class="datepicker-field">
           <label for="start-date">Inizio:</label>
@@ -34,9 +39,7 @@
           <input type="date" id="end-date" required>
         </div>
       </div>
-
       <div id="weekday-list"></div>
-
       <button id="wizard-save" class="btn">
         <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
         Salva slot
@@ -55,163 +58,42 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp }            from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
       addDoc, updateDoc, deleteDoc, doc
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    }                                     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // -- Firebase Init --
-    const firebaseConfig = { /* … */ };
+    // — CONFIGURAZIONE FIREBASE — (CON PROJECTID!)
+    const firebaseConfig = {
+      apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
+      authDomain:        "prenotazioni-app-87467.firebaseapp.com",
+      projectId:         "prenotazioni-app-87467",
+      storageBucket:     "prenotazioni-app-87467.appspot.com",
+      messagingSenderId: "322391103742",
+      appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
+    };
+
+    // Inizializzo Firebase e Firestore
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // -- Helper festività --
-    function calculateEaster(y) { /* … Meeus algorithm … */ }
-    function getHolidays(y) { /* … list fixed + pasqua & pasquetta … */ }
-
-    // -- Login redirect --
-    if (!sessionStorage.getItem('user')) window.location.href='index.html';
+    // — FUNZIONI DI SUPPORTO (festività, login, renderCalendar, attachWizardLogic) —
+    // Copia il codice delle tue funzioni qui, senza modificare il blocco di config!
+    // renderCalendar, attachWizardLogic, calculateEaster, getHolidays, ecc.
+    // Esempio di controllo login:
+    if (!sessionStorage.getItem('user')) {
+      window.location.href = 'index.html';
+    }
     document.getElementById('logout-btn').onclick = () => {
       sessionStorage.removeItem('user');
       window.location.href = 'index.html';
     };
 
-    // -- Avvio --
     window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(new Date());
       attachWizardLogic();
     });
-
-    // -- Render calendario (settimana da lunedì) --
-    async function renderCalendar(dateObj) {
-      /* … genera header, tabella, evidenzia festivi+dom … */
-      /* … carica e mostra gli slot da Firestore … */
-    }
-
-    window.updateSlotVisibility = async (cb,id) => {
-      await updateDoc(doc(db,'slots',id), { visibile: cb.checked });
-    };
-    window.deleteSlot = async (id,btn) => {
-      await deleteDoc(doc(db,'slots',id));
-      btn.closest('.slot').remove();
-    };
-
-    // -- Wizard & Timepicker Logic --
-    function attachWizardLogic() {
-      const wm = document.getElementById('wizard-modal'),
-            tp = document.getElementById('timepicker-modal'),
-            closeBtns = document.querySelectorAll('.close-btn'),
-            wz   = document.getElementById('wizard-btn'),
-            sd   = document.getElementById('start-date'),
-            ed   = document.getElementById('end-date'),
-            wl   = document.getElementById('weekday-list'),
-            hl   = document.getElementById('hour-list'),
-            sa   = document.getElementById('select-all'),
-            ws   = document.getElementById('wizard-save'),
-            ts   = document.getElementById('timepicker-save');
-      let ctx = null;
-
-      // Apri/chiudi popup
-      wz.onclick = () => wm.classList.add('active');
-      closeBtns.forEach(b=>b.onclick = ()=> {
-        b.closest('.modal').classList.remove('active');
-      });
-
-      // Costruisci lista giorni
-      function buildDays() {
-        wl.innerHTML='';
-        const s=sd.valueAsDate,e=ed.valueAsDate;
-        if(!s||!e||s>e) return;
-        for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) {
-          const row=document.createElement('div');
-          row.className='weekday-row';
-          const cb=document.createElement('input'); cb.type='checkbox';
-          cb.dataset.date=d.toISOString().slice(0,10);
-          const lbl=document.createElement('span');
-          lbl.textContent=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric'});
-          const btn=document.createElement('button');
-          btn.type='button'; btn.className='clock-btn';
-          btn.innerHTML=`<svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-          </svg>`;
-          const sel=document.createElement('div');
-          sel.className='selected-times';
-          btn.onclick = ()=> {
-            ctx={cb,sel};
-            buildHours();
-            tp.classList.add('active');
-          };
-          row.append(cb,lbl,btn,sel);
-          wl.append(row);
-        }
-      }
-      sd.onchange = ed.onchange = buildDays;
-
-      // Costruisci orari
-      function buildHours() {
-        hl.innerHTML='';
-        for(let h=7;h<=20;h++){
-          const hr=String(h).padStart(2,'0'),
-                div=document.createElement('div'),
-                c=document.createElement('input'),
-                sh=document.createElement('select'),
-                sm=document.createElement('select');
-          div.className='hour-row'; c.type='checkbox';
-          for(let hh=7;hh<=20;hh++){
-            const o=document.createElement('option');
-            o.value=o.textContent=String(hh).padStart(2,'0');
-            if(o.value===hr) o.selected=true;
-            sh.append(o);
-          }
-          ['00','15','30','45'].forEach(m=>{
-            const o=document.createElement('option');
-            o.value=o.textContent=m;
-            sm.append(o);
-          });
-          div.append(c,sh,document.createTextNode(':'),sm);
-          hl.append(div);
-        }
-      }
-
-      sa && (sa.onclick = e=> {
-        hl.querySelectorAll('input[type=checkbox]')
-          .forEach(c=>c.checked=e.target.checked);
-      });
-
-      ts.onclick = ()=> {
-        const arr=[];
-        hl.querySelectorAll('.hour-row').forEach(r=>{
-          const [c,sh,,sm] = r.children;
-          if(c.checked) arr.push(`${sh.value}:${sm.value}`);
-        });
-        arr.sort();
-        ctx.sel.innerHTML = arr.map(t=>`<span>${t}</span>`).join('');
-        tp.classList.remove('active');
-      };
-
-      ws.onclick = async ()=> {
-        const ops=[];
-        wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const c = row.querySelector('input[type=checkbox]');
-          if(!c.checked) return;
-          const date = c.dataset.date;
-          row.querySelectorAll('.selected-times span')
-             .forEach(sp=> ops.push(
-               addDoc(collection(db,'slots'),{
-                 date,
-                 year:+date.slice(0,4),
-                 month:+date.slice(5,7),
-                 time:sp.textContent,
-                 nome:'',telefono:'',libero:true,visibile:true,dove:''
-               })
-             ));
-        });
-        await Promise.all(ops);
-        wm.classList.remove('active');
-        renderCalendar(new Date());
-      };
-    }
   </script>
 </body>
 </html>
