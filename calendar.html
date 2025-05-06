@@ -11,8 +11,8 @@
   <header class="topbar">
     <button id="logout-btn" class="btn">
       <svg viewBox="0 0 24 24">
-        <path d="M16 17l5-5-5-5M21 12H9"/>
-        <rect x="3" y="4" width="12" height="16" rx="2" ry="2"/>
+        <path d="M16 17l5-5-5-5M21 12H9" />
+        <rect x="3" y="4" width="12" height="16" rx="2" ry="2" />
       </svg>
       Logout
     </button>
@@ -20,7 +20,7 @@
       <svg viewBox="0 0 24 24">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22
                  12 18.56 5.82 22 7 14.14l-5-4.87
-                 6.91-1.01L12 2z"/>
+                 6.91-1.01L12 2z" />
       </svg>
       Wizard
     </button>
@@ -46,10 +46,14 @@
           <input type="date" id="end-date" required />
         </div>
       </div>
-      <!-- Lista sempre statica, Lunedì → Domenica -->
+
+      <!-- Lista statica Lunedì → Domenica -->
       <div id="weekday-list"></div>
+
       <button id="wizard-save" class="btn">
-        <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        <svg viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
         Salva slot
       </button>
     </div>
@@ -59,18 +63,20 @@
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn" type="button">&times;</button>
-      <label><input type="checkbox" id="select-all" /> Seleziona tutto</label>
+      <label>
+        <input type="checkbox" id="select-all" /> Seleziona tutto
+      </label>
       <div id="hour-list"></div>
       <button id="timepicker-save" class="btn">Conferma orari</button>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp }            from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
       addDoc, updateDoc, deleteDoc, doc
-    }                                     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // 1) Configurazione Firebase
     const firebaseConfig = {
@@ -84,7 +90,7 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // 2) Funzioni festività italiane
+    // 2) Calcolo festività italiane
     function calculateEaster(y) {
       const a=y%19,b=Math.floor(y/100),c=y%100,
             d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
@@ -98,8 +104,8 @@
       return new Date(y,month-1,day);
     }
     function getHolidays(y) {
-      const pad=n=>String(n).padStart(2,'0'),
-            eas=calculateEaster(y),
+      const pad = n=>String(n).padStart(2,'0'),
+            eas = calculateEaster(y),
             em=eas.getMonth()+1,ed=eas.getDate(),
             pas=`${y}-${pad(em)}-${pad(ed)}`,
             pmo=new Date(eas);
@@ -114,7 +120,7 @@
       ].map(s=>s.trim());
     }
 
-    // 3) Login check & logout
+    // 3) Verifica login e logout
     if (!sessionStorage.getItem('user')) {
       window.location.href = 'index.html';
     }
@@ -123,7 +129,7 @@
       window.location.href = 'index.html';
     };
 
-    // 4) On load
+    // 4) All’avvio
     window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(new Date());
       attachWizardLogic();
@@ -133,6 +139,7 @@
     async function renderCalendar(dateObj) {
       const container = document.getElementById('calendar-container');
       container.innerHTML = '';
+
       const y     = dateObj.getFullYear(),
             m     = dateObj.getMonth(),
             dim   = new Date(y,m+1,0).getDate(),
@@ -142,7 +149,7 @@
             hols  = getHolidays(y),
             wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
-      // Header mese
+      // navigation header
       const nav = document.createElement('div'); nav.className='calendar-header';
       let mn = dateObj.toLocaleString('it-IT',{month:'long'});
       mn = mn.charAt(0).toUpperCase()+mn.slice(1);
@@ -155,13 +162,11 @@
       const tt = document.createElement('h2'); tt.textContent=`${mn} ${y}`;
       nav.append(bp,tt,bn); container.append(nav);
 
-      // Tabella
+      // build table
       const tbl = document.createElement('table'),
             thead = tbl.createTHead(),
             hr = thead.insertRow();
-      wds.forEach(d=>{
-        const th=document.createElement('th'); th.textContent=d; hr.append(th);
-      });
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; hr.append(th); });
       const tbody=tbl.createTBody();
       let dc=1;
       for(let r=0;r<rows;r++){
@@ -184,9 +189,9 @@
       }
       container.append(tbl);
 
-      // Carica slot
-      const q = query(collection(db,'slots'),where('year','==',y),where('month','==',m+1)),
-            snap = await getDocs(q);
+      // load slots
+      const q= query(collection(db,'slots'),where('year','==',y),where('month','==',m+1)),
+            snap= await getDocs(q);
       snap.forEach(ds=>{
         const s=ds.data(),
               cell=document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
@@ -199,7 +204,8 @@
                  onchange="updateSlotVisibility(this,'${ds.id}')">
           <button class="btn-icon" onclick="deleteSlot('${ds.id}',this)">
             <svg viewBox="0 0 24 24">
-              <path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/>
+              <path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/>
+              <path d="M10 11v6M14 11v6"/>
             </svg>
           </button>
         `;
@@ -215,11 +221,13 @@
       btn.closest('.slot').remove();
     };
 
-    // 6) Wizard logic con weekdays statici
+    // 6) Wizard & Timepicker logic
     function attachWizardLogic(){
       const wz=document.getElementById('wizard-btn'),
             wm=document.getElementById('wizard-modal'),
             tp=document.getElementById('timepicker-modal'),
+            sd=document.getElementById('start-date'),
+            ed=document.getElementById('end-date'),
             wl=document.getElementById('weekday-list'),
             hl=document.getElementById('hour-list'),
             sa=document.getElementById('select-all'),
@@ -228,27 +236,23 @@
             closes=document.querySelectorAll('.close-btn');
       let ctx=null;
 
-      // Genera i 7 giorni all’apertura
+      // genera i 7 giorni e apre popup
       wz.onclick=()=>{
         wl.innerHTML='';
         ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
           .forEach(d=>{
-            const row=document.createElement('div');
-            row.className='weekday-row';
+            const row=document.createElement('div'); row.className='weekday-row';
             const cb=document.createElement('input'); cb.type='checkbox';
             cb.dataset.day=d;
-            const lbl=document.createElement('span');
-            lbl.textContent=d;
-            const btn=document.createElement('button'); btn.type='button';
-            btn.className='clock-btn';
-            btn.innerHTML=`
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-              </svg>`;
+            const lbl=document.createElement('span'); lbl.textContent=d;
+            const btn=document.createElement('button'); btn.type='button'; btn.className='clock-btn';
+            btn.innerHTML=`<svg viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10"/>
+                              <path d="M12 8v4l3 3"/>
+                           </svg>`;
             const sel=document.createElement('div'); sel.className='selected-times';
             btn.onclick=()=>{
               ctx={cb,sel};
-              // buildHours() come prima
               buildHours();
               tp.classList.add('active');
             };
@@ -263,10 +267,8 @@
         hl.innerHTML='';
         for(let h=7;h<=20;h++){
           const hr=String(h).padStart(2,'0'),
-                div=document.createElement('div'),
-                c=document.createElement('input'),
-                sh=document.createElement('select'),
-                sm=document.createElement('select');
+                div=document.createElement('div'), c=document.createElement('input'),
+                sh=document.createElement('select'), sm=document.createElement('select');
           div.className='hour-row'; c.type='checkbox';
           for(let hh=7;hh<=20;hh++){
             const o=document.createElement('option');
@@ -276,7 +278,8 @@
           }
           ['00','15','30','45'].forEach(m=>{
             const o=document.createElement('option');
-            o.value=o.textContent=m; sm.append(o);
+            o.value=o.textContent=m;
+            sm.append(o);
           });
           div.append(c,sh,document.createTextNode(':'),sm);
           hl.append(div);
@@ -291,8 +294,12 @@
       if(ts) ts.onclick=()=>{
         const times=[];
         hl.querySelectorAll('.hour-row').forEach(r=>{
-          const [c,sh,,sm]=r.children;
-          if(c.checked) times.push(`${sh.value}:${sm.value}`);
+          const c=r.querySelector('input[type=checkbox]');
+          const selects=r.querySelectorAll('select');
+          if(c.checked) {
+            const hour=selects[0].value, min=selects[1].value;
+            times.push(`${hour}:${min}`);
+          }
         });
         times.sort();
         ctx.sel.innerHTML=times.map(t=>`<span>${t}</span>`).join('');
@@ -300,21 +307,20 @@
       };
 
       if(ws) ws.onclick=async()=>{
-        // qui salva come prima, usando ctx.cb.dataset.day
         const ops=[];
         wl.querySelectorAll('.weekday-row').forEach(row=>{
           const c=row.querySelector('input[type=checkbox]');
           if(!c.checked) return;
           const dayName=c.dataset.day;
-          row.querySelectorAll('.selected-times span')
-             .forEach(sp=>ops.push(
-               addDoc(collection(db,'slots'),{
-                 date: dayName, // qui solo nome, non data effettiva
-                 year: null, month: null,
-                 time: sp.textContent,
-                 nome:'',telefono:'',libero:true,visibile:true,dove:''
-               })
-             ));
+          row.querySelectorAll('.selected-times span').forEach(sp=>{
+            ops.push(addDoc(collection(db,'slots'),{
+              date: dayName,
+              year: null,
+              month: null,
+              time: sp.textContent,
+              nome:'', telefono:'', libero:true, visibile:true, dove:''
+            }));
+          });
         });
         await Promise.all(ops);
         wm.classList.remove('active');
