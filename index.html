@@ -9,12 +9,13 @@
 <body class="login">
   <div class="card">
     <h2>Accedi</h2>
-    <form id="login-form">
+    <form id="login-form" autocomplete="off">
       <input 
         type="text" 
         id="username" 
         name="username" 
         placeholder="Username" 
+        autocomplete="username"
         required
       >
       <input 
@@ -22,6 +23,7 @@
         id="password" 
         name="password" 
         placeholder="Password" 
+        autocomplete="current-password"
         required
       >
       <button type="submit" class="btn">
