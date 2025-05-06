@@ -46,8 +46,8 @@ body.login {
 input[type="text"],
 input[type="password"],
 input[type="date"] {
-  width: 280px;
-  margin: .5rem 0;
+  width: 100%;
+  margin-top: .5rem;
   padding: .5rem;
   border: var(--input-border);
   border-radius: 8px;
@@ -68,6 +68,9 @@ input[type="date"] {
   width: 1rem;
   height: 1rem;
   margin-right: .5rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
 }
 
 /* — Messaggio di errore — */
@@ -224,14 +227,14 @@ table thead th {
   gap: 1rem;
   margin-bottom: 1rem;
 }
-.datepicker-group label {
+.datepicker-group .datepicker-field {
   flex: 1;
   display: flex;
   flex-direction: column;
   font-weight: bold;
   color: var(--text);
 }
-.datepicker-group input[type="date"] {
+.datepicker-group .datepicker-field input[type="date"] {
   margin-top: .5rem;
   padding: .5rem;
   border: var(--input-border);
@@ -239,27 +242,8 @@ table thead th {
   width: 100%;
 }
 
-/* — Salva slot “cute” — */
-#wizard-save {
-  display: inline-flex;
-  align-items: center;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: .5rem 1rem;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: .5rem;
-}
-#wizard-save svg {
-  width: 1rem;
-  height: 1rem;
-  margin-right: .5rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
-}
+/* — Salva slot usa .btn — */
+/* (non serve override, usa .btn già definito) */
 
 /* — Lista giorni Wizard — */
 #weekday-list .weekday-row {
