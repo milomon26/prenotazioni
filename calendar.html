@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <!-- I 7 giorni senza scroll interno -->
+      <!-- I 7 giorni della settimana sempre visibili -->
       <div id="weekday-list"></div>
 
       <button id="wizard-save" class="btn">
@@ -61,9 +61,7 @@
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn" type="button">&times;</button>
-      <label>
-        <input type="checkbox" id="select-all" /> Seleziona tutto
-      </label>
+      <label><input type="checkbox" id="select-all" /> Seleziona tutto</label>
       <div id="hour-list"></div>
       <button id="timepicker-save" class="btn">Conferma orari</button>
     </div>
@@ -76,7 +74,7 @@
       addDoc, updateDoc, deleteDoc, doc
     }                                     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // 1) Config Firebase
+    // 1) Configurazione Firebase
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -88,7 +86,7 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // 2) Festività italiane
+    // 2) Calcolo festività italiane (Pasqua/Pasquetta + fisse)
     function calculateEaster(y) {
       const a=y%19,b=Math.floor(y/100),c=y%100,
             d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
@@ -106,139 +104,149 @@
             eas=calculateEaster(y),
             em=eas.getMonth()+1,ed=eas.getDate(),
             pas=`${y}-${pad(em)}-${pad(ed)}`,
-            pmo=new Date(eas);
-      pmo.setDate(ed+1);
+            pmo=new Date(eas); pmo.setDate(ed+1);
       const pm=pmo.getMonth()+1,pd=pmo.getDate(),
             pasq=`${y}-${pad(pm)}-${pad(pd)}`;
       return [
-        `${y}-01-01`,` ${y}-01-06`,pas,pasq,
-        `${y}-04-25`,` ${y}-05-01`,` ${y}-06-02`,
-        `${y}-06-29`,` ${y}-08-15`,` ${y}-11-01`,
-        `${y}-12-08`,` ${y}-12-25`,` ${y}-12-26`
-      ].map(s=>s.trim());
+        `${y}-01-01`,`${y}-01-06`,pas,pasq,
+        `${y}-04-25`,`${y}-05-01`,`${y}-06-02`,
+        `${y}-06-29`,`${y}-08-15`,`${y}-11-01`,
+        `${y}-12-08`,`${y}-12-25`,`${y}-12-26`
+      ];
     }
 
-    // 3) Login & logout
-    if (!sessionStorage.getItem('user')) window.location.href='index.html';
-    document.getElementById('logout-btn').onclick = ()=>{
+    // 3) Verifica login + logout
+    if (!sessionStorage.getItem('user')) {
+      window.location.href = 'index.html';
+    }
+    document.getElementById('logout-btn').onclick = () => {
       sessionStorage.removeItem('user');
-      window.location.href='index.html';
+      window.location.href = 'index.html';
     };
 
-    // 4) Avvio
-    window.addEventListener('DOMContentLoaded',()=>{
+    // 4) Al caricamento: calendario + wizard
+    window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(new Date());
       attachWizardLogic();
     });
 
-    // 5) renderCalendar (come prima)
+    // 5) renderCalendar completo
     async function renderCalendar(dateObj) {
-      /* ... */
+      const container = document.getElementById('calendar-container');
+      container.innerHTML = '';
+
+      const year       = dateObj.getFullYear(),
+            month      = dateObj.getMonth(),
+            daysInMonth= new Date(year, month+1, 0).getDate(),
+            rawFirst   = new Date(year, month, 1).getDay(),    // 0=Dom…6=Sab
+            firstDay   = (rawFirst + 6) % 7,                   // 0=Lun…6=Dom
+            rows       = Math.ceil((firstDay + daysInMonth)/7),
+            holidays   = getHolidays(year),
+            weekdays   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+      // – Header di navigazione –
+      const nav = document.createElement('div');
+      nav.className = 'calendar-header';
+      let mName = dateObj.toLocaleString('it-IT',{month:'long'});
+      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
+      const btnPrev = document.createElement('button');
+      btnPrev.className = 'btn-nav';
+      btnPrev.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
+      btnPrev.onclick = () => renderCalendar(new Date(year, month-1, 1));
+      const title = document.createElement('h2');
+      title.textContent = `${mName} ${year}`;
+      const btnNext = document.createElement('button');
+      btnNext.className = 'btn-nav';
+      btnNext.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
+      btnNext.onclick = () => renderCalendar(new Date(year, month+1, 1));
+      nav.append(btnPrev, title, btnNext);
+      container.append(nav);
+
+      // – Costruzione tabella –
+      const tbl   = document.createElement('table'),
+            thead = tbl.createTHead(),
+            hdrRow= thead.insertRow();
+      weekdays.forEach(d => {
+        const th = document.createElement('th');
+        th.textContent = d;
+        hdrRow.append(th);
+      });
+      const tbody = tbl.createTBody();
+      let dayCount = 1;
+      for (let r = 0; r < rows; r++) {
+        const tr = tbody.insertRow();
+        for (let c = 0; c < 7; c++) {
+          const td = tr.insertCell();
+          const idx = r*7 + c;
+          if (idx < firstDay || dayCount > daysInMonth) {
+            td.innerHTML = '';
+          } else {
+            const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
+            td.className = 'calendar-cell';
+            td.dataset.date = iso;
+            if (c === 6 || holidays.includes(iso)) {
+              td.classList.add('holiday');
+            }
+            td.innerHTML = `
+              <div>${dayCount}</div>
+              <div class="slots-container"></div>
+            `;
+            dayCount++;
+          }
+        }
+      }
+      container.append(tbl);
+
+      // – Caricamento slot da Firestore –
+      const q    = query(collection(db,'slots'),
+                         where('year','==',year),
+                         where('month','==',month+1)),
+            snap = await getDocs(q);
+      snap.forEach(docSnap => {
+        const s    = docSnap.data(),
+              cell = document.querySelector(
+                       `.calendar-cell[data-date="${s.date}"] .slots-container`
+                     );
+        if (!cell) return;
+        const slotEl = document.createElement('div');
+        slotEl.className = 'slot ' + (s.libero ? 'free' : '');
+        slotEl.innerHTML = `
+          <span>${s.time}</span>
+          <input type="checkbox" ${s.visibile?'checked':''}
+                 onchange="updateSlotVisibility(this,'${docSnap.id}')">
+          <button class="btn-icon" onclick="deleteSlot('${docSnap.id}', this)">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/>
+            </svg>
+          </button>
+        `;
+        cell.append(slotEl);
+      });
     }
-    window.updateSlotVisibility=async(cb,id)=>{
-      await updateDoc(doc(db,'slots',id),{visibile:cb.checked});
+
+    // – update & delete helper –
+    window.updateSlotVisibility = async (cb,id) => {
+      await updateDoc(doc(db,'slots',id), { visibile: cb.checked });
     };
-    window.deleteSlot=async(id,btn)=>{
+    window.deleteSlot = async (id,btn) => {
       await deleteDoc(doc(db,'slots',id));
       btn.closest('.slot').remove();
     };
 
-    // 6) Wizard logic con 7 giorni statici
-    function attachWizardLogic(){
-      const wz=document.getElementById('wizard-btn'),
-            wm=document.getElementById('wizard-modal'),
-            tp=document.getElementById('timepicker-modal'),
-            wl=document.getElementById('weekday-list'),
-            hl=document.getElementById('hour-list'),
-            sa=document.getElementById('select-all'),
-            ws=document.getElementById('wizard-save'),
-            ts=document.getElementById('timepicker-save'),
-            closes=document.querySelectorAll('.close-btn');
-      let ctx=null;
+    // 6) Wizard & Timepicker logic con 7 giorni statici
+    function attachWizardLogic() {
+      const wz     = document.getElementById('wizard-btn'),
+            wm     = document.getElementById('wizard-modal'),
+            tp     = document.getElementById('timepicker-modal'),
+            wl     = document.getElementById('weekday-list'),
+            hl     = document.getElementById('hour-list'),
+            sa     = document.getElementById('select-all'),
+            wizSave= document.getElementById('wizard-save'),
+            tpSave = document.getElementById('timepicker-save'),
+            closes = document.querySelectorAll('.close-btn');
+      let ctx = null;
 
-      wz.onclick=()=>{
-        wl.innerHTML='';
-        ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-          .forEach(d=>{
-            const row=document.createElement('div'); row.className='weekday-row';
-            const cb=document.createElement('input'); cb.type='checkbox';
-            cb.dataset.day=d;
-            const lbl=document.createElement('span'); lbl.textContent=d;
-            const btn=document.createElement('button'); btn.type='button'; btn.className='clock-btn';
-            btn.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`;
-            const sel=document.createElement('div'); sel.className='selected-times';
-            btn.onclick=()=>{
-              ctx={cb,sel};
-              buildHours();
-              tp.classList.add('active');
-            };
-            row.append(cb,lbl,btn,sel);
-            wl.append(row);
-          });
-        wm.classList.add('active');
-      };
-      closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
-
-      function buildHours(){
-        hl.innerHTML='';
-        for(let h=7;h<=20;h++){
-          const hr=String(h).padStart(2,'0'),
-                div=document.createElement('div'),
-                c=document.createElement('input'),
-                sh=document.createElement('select'),
-                sm=document.createElement('select');
-          div.className='hour-row'; c.type='checkbox';
-          for(let hh=7;hh<=20;hh++){
-            const o=document.createElement('option'); o.value=o.textContent=String(hh).padStart(2,'0');
-            if(o.value===hr) o.selected=true; sh.append(o);
-          }
-          ['00','15','30','45'].forEach(m=>{
-            const o=document.createElement('option'); o.value=o.textContent=m; sm.append(o);
-          });
-          div.append(c,sh,document.createTextNode(':'),sm);
-          hl.append(div);
-        }
-      }
-
-      if(sa) sa.onclick=e=>{
-        hl.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=e.target.checked);
-      };
-      if(ts) ts.onclick=()=>{
-        const times=[];
-        hl.querySelectorAll('.hour-row').forEach(r=>{
-          const c=r.querySelector('input[type=checkbox]'),
-                selects=r.querySelectorAll('select');
-          if(c.checked) times.push(`${selects[0].value}:${selects[1].value}`);
-        });
-        times.sort();
-        ctx.sel.innerHTML=times.map(t=>`<span>${t}</span>`).join('');
-        tp.classList.remove('active');
-      };
-      if(ws) ws.onclick=async()=>{
-        const ops=[];
-        wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const c=row.querySelector('input[type=checkbox]');
-          if(!c.checked) return;
-          const dayName=c.dataset.day;
-          row.querySelectorAll('.selected-times span').forEach(sp=>{
-            ops.push(addDoc(collection(db,'slots'),{
-              date:      dayName,
-              year:      null,
-              month:     null,
-              time:      sp.textContent,
-              nome:      '',
-              telefono:  '',
-              libero:    true,
-              visibile:  true,
-              dove:      ''
-            }));
-          });
-        });
-        await Promise.all(ops);
-        wm.classList.remove('active');
-        renderCalendar(new Date());
-      };
-    }
-  </script>
-</body>
-</html>
+      // Al click “Wizard” genero i 7 giorni e apro il popup
+      wz.onclick = () => {
+        wl.innerHTML = '';
+        ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato
