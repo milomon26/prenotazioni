@@ -7,27 +7,31 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Topbar -->
   <header class="topbar">
     <button id="logout-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9" stroke="#006064" stroke-width="2" fill="none"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2" stroke="#006064" stroke-width="2" fill="none"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M16 17l5-5-5-5M21 12H9" stroke="#006064" stroke-width="2" fill="none"/>
+        <rect x="3" y="4" width="12" height="16" rx="2" ry="2"
+              stroke="#006064" stroke-width="2" fill="none"/>
+      </svg>
       Logout
     </button>
     <button id="wizard-btn" class="btn">
-      <!-- icona “cute” magic-wand -->
+      <!-- icona “star” stroke -->
       <svg viewBox="0 0 24 24">
-        <path d="M2 14l7-7M5 2l2 4M14 12l8-8M18 2l-4 2" stroke="#006064" stroke-width="2" fill="none"/>
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 
+                 12 18.56 5.82 22 7 14.14l-5-4.87 
+                 6.91-1.01L12 2z"/>
       </svg>
       Wizard
     </button>
   </header>
 
-  <!-- Calendario -->
   <main>
     <div id="calendar-container"></div>
   </main>
 
-  <!-- Popup: selezione date -->
+  <!-- Popup Wizard -->
   <div id="wizard-modal" class="modal">
     <div class="modal-content">
       <h3>Seleziona Date</h3>
@@ -38,7 +42,7 @@
     </div>
   </div>
 
-  <!-- Popup: timepicker -->
+  <!-- Popup Timepicker -->
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <label><input type="checkbox" id="select-all"> Seleziona tutto</label>
@@ -54,7 +58,7 @@
       addDoc, updateDoc, deleteDoc, doc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // ——— 1) Configurazione Firebase ———————————————————
+    // — 1) Configura Firebase —————————————————————————
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -66,9 +70,8 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // ——— 2) Calcolo festività italiane ——————————————————
+    // — 2) Calcolo festività italiane ——————————————————————
     function calculateEaster(year) {
-      // Algoritmo di Meeus
       const a = year % 19,
             b = Math.floor(year/100),
             c = year % 100,
@@ -85,32 +88,29 @@
             day   = ((h + L - 7*m + 114) % 31) + 1;
       return new Date(year, month - 1, day);
     }
-
     function getHolidays(year) {
       const pad = n => String(n).padStart(2,'0'),
             easter = calculateEaster(year),
-            em   = easter.getMonth() + 1,
-            ed   = easter.getDate(),
-            easterMon = new Date(easter).setDate(ed + 1),
-            holidays = [
-              `${year}-01-01`, // Capodanno
-              `${year}-01-06`, // Epifania
-              `${year}-${pad(em)}-${pad(ed)}`, // Pasqua
-              `${year}-${pad(new Date(easterMon).getMonth()+1)}-${pad(new Date(easterMon).getDate())}`, // Pasquetta
-              `${year}-04-25`, // Liberazione
-              `${year}-05-01`, // Lavoro
-              `${year}-06-02`, // Repubblica
-              `${year}-06-29`, // San Pietro e Paolo
-              `${year}-08-15`, // Ferragosto
-              `${year}-11-01`, // Ognissanti
-              `${year}-12-08`, // Immacolata
-              `${year}-12-25`, // Natale
-              `${year}-12-26`  // Santo Stefano
+            em = easter.getMonth() + 1,
+            ed = easter.getDate(),
+            pasqua     = `${year}-${pad(em)}-${pad(ed)}`,
+            pasquettaD = new Date(easter).setDate(ed + 1),
+            pm = new Date(pasquettaD).getMonth() + 1,
+            pd = new Date(pasquettaD).getDate(),
+            pasquetta  = `${year}-${pad(pm)}-${pad(pd)}`,
+            f = [
+              `${year}-01-01`,`<${year}-01-06>`,
+              pasqua,pasquetta,
+              `${year}-04-25`,`\`{year}-05-01`,`${year}-06-02`,
+              `${year}-06-29`,`${year}-08-15`,
+              `${year}-11-01`,`${year}-12-08`,
+              `${year}-12-25`,`${year}-12-26`
             ];
-      return holidays;
+      // rimuovo eventuali backtick e < > di battitura
+      return f.map(s=>s.replace(/[`<>]/g,''));
     }
 
-    // ——— 3) Controllo login via sessionStorage ——————————
+    // — 3) Controlla login + logout ——————————————————————
     if (!sessionStorage.getItem('user')) {
       window.location.href = 'index.html';
     }
@@ -119,13 +119,13 @@
       window.location.href = 'index.html';
     };
 
-    // ——— 4) Start ——————————————————————————————
+    // — 4) Avvia render e Wizard ——————————————————————
     window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(new Date());
       attachWizardLogic();
     });
 
-    // ——— 5) Render calendario ——————————————————————
+    // — 5) Render del calendario ——————————————————————
     async function renderCalendar(dateObj) {
       const container = document.getElementById('calendar-container');
       container.innerHTML = '';
@@ -133,27 +133,25 @@
       const year  = dateObj.getFullYear(),
             month = dateObj.getMonth(),
             daysInMonth = new Date(year, month+1, 0).getDate(),
-            // spostiamo la settimana per partire dal Lunedì
-            firstDay = (new Date(year, month, 1).getDay() + 6) % 7,
+            firstDayRaw = new Date(year, month, 1).getDay(),
+            // shift per iniziare dal lunedì
+            firstDay = (firstDayRaw + 6) % 7,
             rows     = Math.ceil((firstDay + daysInMonth) / 7),
             holidays = getHolidays(year),
             weekdays = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
-      // — Navigation header —
+      // — header navigazione —
       const nav = document.createElement('div');
       nav.className = 'calendar-header';
-      // prettizzo mese con Maiuscola
+      // mese maiuscola
       let mName = dateObj.toLocaleString('it-IT',{ month:'long' });
       mName = mName.charAt(0).toUpperCase() + mName.slice(1);
-      // prev
       const btnPrev = document.createElement('button');
       btnPrev.className = 'btn-nav';
       btnPrev.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
       btnPrev.onclick = () => renderCalendar(new Date(year,month-1,1));
-      // titolo
       const title = document.createElement('h2');
       title.textContent = `${mName} ${year}`;
-      // next
       const btnNext = document.createElement('button');
       btnNext.className = 'btn-nav';
       btnNext.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
@@ -161,7 +159,7 @@
       nav.append(btnPrev, title, btnNext);
       container.append(nav);
 
-      // — Table & header giorni —
+      // — table e header giorni —
       const tbl   = document.createElement('table'),
             thead = tbl.createTHead(),
             rowH  = thead.insertRow();
@@ -171,20 +169,23 @@
         rowH.append(th);
       });
 
-      // — Corpo con numero di righe dinamico —
+      // — corpo con righe dinamiche —
       const tbody = tbl.createTBody();
       let dayCount = 1;
       for (let r=0; r<rows; r++) {
         const tr = tbody.insertRow();
         for (let c=0; c<7; c++) {
           const td = tr.insertCell();
-          const cellIndex = r*7 + c;
-          if (cellIndex < firstDay || dayCount > daysInMonth) {
+          const idx = r*7 + c;
+          if (idx < firstDay || dayCount > daysInMonth) {
             td.innerHTML = '';
           } else {
             const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(dayCount).padStart(2,'0')}`;
             td.className = 'calendar-cell';
-            if (holidays.includes(iso)) td.classList.add('holiday');
+            // festivo se in holidays OPPURE domenica (c===6)
+            if (holidays.includes(iso) || c === 6) {
+              td.classList.add('holiday');
+            }
             td.innerHTML = `
               <div>${dayCount}</div>
               <div class="slots-container"></div>
@@ -195,39 +196,146 @@
       }
       container.append(tbl);
 
-      // — Caricamento slot da Firestore —
-      const q    = query(collection(db,'slots'), where('year','==',year), where('month','==',month+1)),
+      // — carica slot da Firestore —
+      const q    = query(collection(db,'slots'),
+                         where('year','==',year),
+                         where('month','==',month+1)),
             snap = await getDocs(q);
-      snap.forEach(docSnap => {
-        const s = docSnap.data();
-        const cell = document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
+      snap.forEach(ds => {
+        const s = ds.data(),
+              cell = document.querySelector(
+                `.calendar-cell[data-date="${s.date}"] .slots-container`
+              );
         if (!cell) return;
         const slotEl = document.createElement('div');
-        slotEl.className = 'slot ' + (s.libero ? 'free' : '');
+        slotEl.className = 'slot ' + (s.libero?'free':'');
         slotEl.innerHTML = `
           <span>${s.time}</span>
           <input type="checkbox" ${s.visibile?'checked':''}
-                 onchange="updateHolidayVisibility(this,'${docSnap.id}')">
-          <button class="btn-icon" onclick="deleteSlot('${docSnap.id}', this)">
-            <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+                 onchange="updateHolidayVisibility(this,'${ds.id}')">
+          <button class="btn-icon" onclick="deleteSlot('${ds.id}', this)">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/>
+            </svg>
           </button>`;
         cell.append(slotEl);
       });
     }
 
-    // — Helpers per update/delete —
-    window.updateHolidayVisibility = async (cb, id) => {
+    // — helper update/delete —
+    window.updateHolidayVisibility = async (cb,id) => {
       await updateDoc(doc(db,'slots',id), { visibile: cb.checked });
     };
-    window.deleteSlot = async (id, btn) => {
+    window.deleteSlot = async (id,btn) => {
       await deleteDoc(doc(db,'slots',id));
       btn.closest('.slot').remove();
     };
 
-    // — Wizard & Timepicker (resta invariato) —
+    // — 6) Wizard & Timepicker logic ————————————————————
     function attachWizardLogic() {
-      // ... (mantieni esattamente la tua logica esistente) ...
-      // non serve riscriverla qui
+      const wizBtn     = document.getElementById('wizard-btn'),
+            wizModal   = document.getElementById('wizard-modal'),
+            tpModal    = document.getElementById('timepicker-modal'),
+            startInput = document.getElementById('start-date'),
+            endInput   = document.getElementById('end-date'),
+            weekdayList= document.getElementById('weekday-list'),
+            hourList   = document.getElementById('hour-list'),
+            selectAll  = document.getElementById('select-all'),
+            wizSave    = document.getElementById('wizard-save'),
+            tpSave     = document.getElementById('timepicker-save');
+      let ctx = null;
+
+      wizBtn.addEventListener('click', ()=> wizModal.classList.add('active'));
+      function buildDays() {
+        weekdayList.innerHTML = '';
+        const s = startInput.valueAsDate, e = endInput.valueAsDate;
+        if (!s||!e||s>e) return;
+        for (let d=new Date(s); d<=e; d.setDate(d.getDate()+1)) {
+          const row = document.createElement('div'),
+                cb  = document.createElement('input'),
+                lbl = document.createElement('span'),
+                btn = document.createElement('button'),
+                sel = document.createElement('div');
+          cb.type='checkbox'; cb.dataset.date=d.toISOString().slice(0,10);
+          lbl.textContent = d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric'});
+          btn.className='btn-icon';
+          btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`;
+          sel.className='selected-times';
+          btn.addEventListener('click', ()=>{
+            ctx={cb,sel};
+            buildHours();
+            tpModal.classList.add('active');
+          });
+          row.append(cb,lbl,btn,sel);
+          weekdayList.append(row);
+        }
+      }
+      startInput.addEventListener('change', buildDays);
+      endInput.addEventListener('change', buildDays);
+
+      function buildHours() {
+        hourList.innerHTML = '';
+        for (let h=7; h<=20; h++){
+          const hr = String(h).padStart(2,'0'),
+                div= document.createElement('div'),
+                cb = document.createElement('input'),
+                sh = document.createElement('select'),
+                sm = document.createElement('select');
+          div.className='hour-row';
+          cb.type='checkbox';
+          for (let hh=7; hh<=20; hh++){
+            const o=document.createElement('option');
+            o.value=o.textContent=String(hh).padStart(2,'0');
+            if(o.value===hr) o.selected=true;
+            sh.append(o);
+          }
+          ['00','15','30','45'].forEach(m=>{
+            const o=document.createElement('option');
+            o.value=o.textContent=m;
+            sm.append(o);
+          });
+          div.append(cb,sh,document.createTextNode(':'),sm);
+          hourList.append(div);
+        }
+      }
+
+      selectAll.addEventListener('click', e=>{
+        hourList.querySelectorAll('input[type=checkbox]')
+                .forEach(c=>c.checked=e.target.checked);
+      });
+
+      tpSave.addEventListener('click', ()=>{
+        const times=[];
+        hourList.querySelectorAll('.hour-row').forEach(r=>{
+          const [c,sh,,sm]=r.children;
+          if(c.checked) times.push(`${sh.value}:${sm.value}`);
+        });
+        times.sort();
+        ctx.sel.innerHTML = times.map(t=>`<span>${t}</span>`).join('');
+        tpModal.classList.remove('active');
+      });
+
+      wizSave.addEventListener('click', async ()=>{
+        const ops=[];
+        weekdayList.querySelectorAll('div').forEach(row=>{
+          const c=row.querySelector('input[type=checkbox]');
+          if(!c.checked) return;
+          const date=c.dataset.date;
+          row.querySelectorAll('.selected-times span')
+             .forEach(sp=> ops.push(
+               addDoc(collection(db,'slots'), {
+                 date,
+                 year:+date.slice(0,4),
+                 month:+date.slice(5,7),
+                 time:sp.textContent,
+                 nome:'', telefono:'', libero:true, visibile:true, dove:''
+               })
+             ));
+        });
+        await Promise.all(ops);
+        wizModal.classList.remove('active');
+        renderCalendar(new Date());
+      });
     }
   </script>
 </body>
