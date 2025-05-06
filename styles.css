@@ -192,3 +192,59 @@ th, td {
   font-size: .8rem;
   margin-top: 2px;
 }
+/* ———————————————————————————————— */
+/*  Regole aggiuntive per il calendario */
+/* ———————————————————————————————— */
+
+/* Header dei giorni della settimana */
+table thead th {
+  background: var(--card);
+  text-align: center;
+  padding: .5rem 0;
+  font-weight: bold;
+  height: auto; /* adatta l'altezza al testo */
+}
+
+/* Numeri festività in rosso */
+.calendar-cell.holiday > div:first-child {
+  color: red;
+}
+
+/* Bordi più delicati */
+table th,
+table td {
+  border: 1px solid var(--accent);
+}
+
+/* Centra il testo nelle celle del calendario */
+.calendar-cell,
+table thead th {
+  text-align: center;
+}
+
+/* Pulsanti di navigazione “cute” */
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .6rem;
+  border-radius: 6px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+.btn-nav svg {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Pulsante Wizard con icona */
+#wizard-btn svg {
+  width: 1rem;
+  height: 1rem;
+  margin-right: .5rem;
+}
