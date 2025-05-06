@@ -25,7 +25,7 @@ body {
   min-height: 100vh;
 }
 
-/* — Login page — */
+/* — Card & Login — */
 body.login {
   display: flex;
   justify-content: flex-end;
@@ -33,14 +33,14 @@ body.login {
   height: 100vh;
   padding-right: 2rem;
 }
-
-/* — Card generica, inputs e bottoni — */
 .card {
   background: var(--card);
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
 }
+
+/* — Input & Button — */
 input[type="text"],
 input[type="password"],
 input[type="date"] {
@@ -62,12 +62,8 @@ input[type="date"] {
   color: white;
 }
 .btn svg {
-  width: 1rem;
-  height: 1rem;
-  margin-right: .5rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
+  width: 1rem; height: 1rem; margin-right: .5rem;
+  stroke: #006064; stroke-width: 2; fill: none;
 }
 .error {
   color: red;
@@ -92,8 +88,7 @@ table {
   border-collapse: collapse;
   background: var(--bg);
 }
-table th,
-table td {
+table th, table td {
   border: 1px solid var(--accent);
   padding: 4px;
   vertical-align: top;
@@ -104,39 +99,8 @@ table thead th {
   padding: .5rem 0;
   font-weight: bold;
 }
-.calendar-cell,
-table thead th {
+.calendar-cell, table thead th {
   text-align: center;
-}
-.calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 1rem 0;
-}
-.calendar-header h2 {
-  margin: 0 .5rem;
-  text-transform: capitalize;
-}
-.btn-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: .4rem .6rem;
-  border-radius: 6px;
-  background: var(--accent);
-  border: none;
-  cursor: pointer;
-}
-.btn-nav svg {
-  width: 1rem;
-  height: 1rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
-}
-.calendar-cell.holiday > div:first-child {
-  color: red;
 }
 .calendar-cell {
   position: relative;
@@ -144,6 +108,9 @@ table thead th {
 }
 .calendar-cell div:first-child {
   font-weight: bold;
+}
+.calendar-cell.holiday > div:first-child {
+  color: red;
 }
 .slots-container {
   margin-top: 4px;
@@ -170,11 +137,34 @@ table thead th {
   cursor: pointer;
 }
 .btn-icon svg {
-  width: 1rem;
-  height: 1rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
+  width: 1rem; height: 1rem;
+  stroke: #006064; stroke-width: 2; fill: none;
+}
+
+/* — Nav mese — */
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+.calendar-header h2 {
+  margin: 0 .5rem;
+  text-transform: capitalize;
+}
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .6rem;
+  border-radius: 6px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+.btn-nav svg {
+  width: 1rem; height: 1rem;
+  stroke: #006064; stroke-width: 2; fill: none;
 }
 
 /* — Modali generici — */
@@ -198,46 +188,33 @@ table thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  /* rimuoviamo ogni altezza massima e overflow:
-     il contenuto farà crescere il popup in altezza */
+  /* via libera all’altezza:
+     il contenuto espande il modal-content */
 }
-
-/* — Pulsante di chiusura — */
 .close-btn {
   position: absolute;
-  top: .5rem;
-  right: .5rem;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: var(--text);
+  top: .5rem; right: .5rem;
+  background: none; border: none;
+  font-size: 1.2rem; color: var(--text);
   cursor: pointer;
 }
 
 /* — Datepicker affiancati — */
 .datepicker-group {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  display: flex; gap: 1rem; margin-bottom: 1rem;
 }
 .datepicker-field {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  font-weight: bold;
-  color: var(--text);
+  flex: 1; display: flex; flex-direction: column;
+  font-weight: bold; color: var(--text);
 }
 .datepicker-field input[type="date"] {
-  margin-top: .5rem;
-  padding: .5rem;
-  border: var(--input-border);
-  border-radius: 8px;
+  margin-top: .5rem; padding: .5rem;
+  border: var(--input-border); border-radius: 8px;
   width: 100%;
 }
 
 /* — Lista statica giorni della settimana — */
 #weekday-list {
-  /* nessun max-height, nessun overflow */
   margin-bottom: 1rem;
 }
 .weekday-row {
@@ -254,25 +231,18 @@ table thead th {
   margin-right: .5rem;
 }
 .weekday-row span {
-  flex: 1;
-  text-align: center;
-  color: var(--text);
+  flex: 1; text-align: center; color: var(--text);
 }
 
-/* — Pulsante orologio — */
+/* — Tasto orologio — */
 .clock-btn {
   background: var(--accent);
-  border: none;
-  border-radius: 4px;
-  padding: .3rem;
+  border: none; border-radius: 4px; padding: .3rem;
   cursor: pointer;
 }
 .clock-btn svg {
-  width: 1rem;
-  height: 1rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
+  width: 1rem; height: 1rem;
+  stroke: #006064; stroke-width: 2; fill: none;
 }
 
 /* — Conferma orari — */
