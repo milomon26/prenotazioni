@@ -39,14 +39,14 @@ body.login {
 }
 
 /* Input generici */
-input[type="email"],
+input[type="text"],
 input[type="password"],
 input[type="date"] {
-  width: 100%;
-  margin: .5rem 0;
-  padding: .5rem;
+  width: 280px;         /* larghezza uniforme */
+  margin: 0.5rem 0;     
+  padding: 0.5rem;      
   border: var(--input-border);
-  border-radius: 4px;
+  border-radius: 8px;   /* bordi più arrotondati */
 }
 
 /* Bottoni principali */
