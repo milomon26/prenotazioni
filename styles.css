@@ -300,3 +300,43 @@ table thead th {
 #timepicker-save {
   margin-top: .5rem;
 }
+/* — Lista giorni Wizard — */
+#weekday-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+.weekday-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .4rem 0;
+  border-top: 1px solid var(--accent);
+}
+.weekday-row:first-child {
+  border-top: none;
+}
+.weekday-row input[type="checkbox"] {
+  margin-right: .5rem;
+}
+.weekday-row span {
+  flex: 1;
+  text-align: center;
+  color: var(--text);
+}
+
+/* — Tasto orologio “cute” — */
+.clock-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  padding: .3rem;
+  cursor: pointer;
+}
+.clock-btn svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
+}
