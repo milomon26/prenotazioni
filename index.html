@@ -11,7 +11,7 @@
   <div class="card">
     <h2>Accedi</h2>
     <form id="login-form">
-      <input type="email"   id="email"    placeholder="Email"    required>
+      <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
       <button type="submit" class="btn">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M10 8l4 4-4 4" stroke="#006064" stroke-width="2" fill="none"/></svg>
@@ -23,7 +23,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // La tua configurazione Firebase
     const firebaseConfig = {
@@ -35,17 +35,29 @@
       appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
 
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    // Inizializza Firebase e Firestore
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const email = e.target.email.value, pw = e.target.password.value;
-      try {
-        await signInWithEmailAndPassword(auth, email, pw);
-        location.href = 'calendar.html';
-      } catch(err) {
-        document.getElementById('error-msg').textContent = err.message;
+      const user = e.target.username.value.trim();
+      const pass = e.target.password.value;
+
+      // Query alla collezione "users"
+      const q = query(
+        collection(db, 'users'),
+        where('username', '==', user),
+        where('password', '==', pass)
+      );
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        // Trovato un match: login riuscito
+        window.location.href = 'calendar.html';
+      } else {
+        // Nessun utente corrispondente
+        document.getElementById('error-msg').textContent = 'Username o password errati';
       }
     });
   </script>
