@@ -2,29 +2,26 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Calendario</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Topbar -->
   <header class="topbar">
     <button id="logout-btn" class="btn">
-      <!-- logout icon -->
-      <svg viewBox="0 0 24 24">
-        <path d="M16 17l5-5-5-5M21 12H9" stroke="#006064" stroke-width="2" fill="none"/>
-        <rect x="3" y="4" width="12" height="16" rx="2" ry="2"
-              stroke="#006064" stroke-width="2" fill="none"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9" stroke="#006064" stroke-width="2" fill="none"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2" stroke="#006064" stroke-width="2" fill="none"/></svg>
       Logout
     </button>
     <button id="wizard-btn" class="btn">Wizard</button>
   </header>
 
+  <!-- Calendario -->
   <main>
     <div id="calendar-container"></div>
   </main>
 
-  <!-- Popup Wizard -->
+  <!-- Popup: selezione date -->
   <div id="wizard-modal" class="modal">
     <div class="modal-content">
       <h3>Seleziona Date</h3>
@@ -35,7 +32,7 @@
     </div>
   </div>
 
-  <!-- Popup Timepicker -->
+  <!-- Popup: timepicker -->
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <label><input type="checkbox" id="select-all"> Seleziona tutto</label>
@@ -51,7 +48,7 @@
       addDoc, updateDoc, deleteDoc, doc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // Configurazione Firebase
+    // 1) Configura Firebase
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -59,3 +56,210 @@
       storageBucket:     "prenotazioni-app-87467.appspot.com",
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // 2) Controlla login e redirect
+    if (!sessionStorage.getItem('user')) {
+      window.location.href = 'index.html';
+    }
+
+    // 3) Gestione logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      sessionStorage.removeItem('user');
+      window.location.href = 'index.html';
+    });
+
+    // 4) Al caricamento, mostra calendario e inizializza wizard
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCalendar(new Date());
+      attachWizardLogic();
+    });
+
+    // 5) Funzione per generare il calendario
+    async function renderCalendar(dateObj) {
+      const container = document.getElementById('calendar-container');
+      container.innerHTML = '';
+      const month = dateObj.getMonth(), year = dateObj.getFullYear();
+
+      // Header con navigazione
+      const hdr = document.createElement('div'); hdr.className = 'calendar-header';
+      const btnPrev = document.createElement('button'); btnPrev.textContent = '<';
+      btnPrev.onclick = () => renderCalendar(new Date(year, month-1, 1));
+      const btnNext = document.createElement('button'); btnNext.textContent = '>';
+      btnNext.onclick = () => renderCalendar(new Date(year, month+1, 1));
+      const title = document.createElement('h2');
+      title.textContent = dateObj.toLocaleString('it-IT',{ month:'long', year:'numeric' });
+      hdr.append(btnPrev, title, btnNext);
+      container.append(hdr);
+
+      // Tabella dei giorni
+      const tbl = document.createElement('table');
+      const thead = tbl.createTHead(), hdrRow = thead.insertRow();
+      ['Dom','Lun','Mar','Mer','Gio','Ven','Sab']
+        .forEach(d => hdrRow.insertCell().textContent = d);
+      const tbody = tbl.createTBody();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+      let num = 1;
+      for (let r=0; r<6; r++) {
+        const tr = tbody.insertRow();
+        for (let c=0; c<7; c++) {
+          const td = tr.insertCell();
+          if ((r===0 && c<firstDay) || num>daysInMonth) {
+            // vuoto
+          } else {
+            td.className = 'calendar-cell';
+            const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(num).padStart(2,'0')}`;
+            td.dataset.date = iso;
+            td.innerHTML = `<div>${num}</div><div class="slots-container"></div>`;
+            num++;
+          }
+        }
+      }
+      container.append(tbl);
+
+      // 6) Carica gli slot da Firestore
+      const q = query(
+        collection(db,'slots'),
+        where('year','==',year),
+        where('month','==',month+1)
+      );
+      const snap = await getDocs(q);
+      snap.forEach(docSnap => {
+        const s = docSnap.data();
+        const cell = document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
+        if (!cell) return;
+
+        // crea elemento slot
+        const slotEl = document.createElement('div');
+        slotEl.className = 'slot ' + (s.libero ? 'free' : '');
+        // orario
+        const span = document.createElement('span'); span.textContent = s.time;
+        // checkbox visibilità
+        const cb = document.createElement('input'); cb.type = 'checkbox';
+        cb.checked = s.visibile;
+        cb.addEventListener('change', async () => {
+          await updateDoc(doc(db,'slots',docSnap.id), { visibile: cb.checked });
+        });
+        // icon-trash per delete
+        const del = document.createElement('button'); del.className = 'btn-icon';
+        del.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 6h18" stroke="#006064" stroke-width="2" fill="none"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="#006064" stroke-width="2" fill="none"/><path d="M10 11v6M14 11v6" stroke="#006064" stroke-width="2"/></svg>`;
+        del.addEventListener('click', async () => {
+          await deleteDoc(doc(db,'slots',docSnap.id));
+          slotEl.remove();
+        });
+
+        slotEl.append(span, cb, del);
+        cell.append(slotEl);
+      });
+    }
+
+    // 7) Wizard + timepicker
+    function attachWizardLogic() {
+      const wizBtn     = document.getElementById('wizard-btn'),
+            wizModal   = document.getElementById('wizard-modal'),
+            tpModal    = document.getElementById('timepicker-modal'),
+            startInput = document.getElementById('start-date'),
+            endInput   = document.getElementById('end-date'),
+            weekdayList= document.getElementById('weekday-list'),
+            hourList   = document.getElementById('hour-list'),
+            selectAll  = document.getElementById('select-all'),
+            wizSave    = document.getElementById('wizard-save'),
+            tpSave     = document.getElementById('timepicker-save');
+      let ctx = null;
+
+      wizBtn.addEventListener('click', () => wizModal.classList.add('active'));
+
+      function buildDays() {
+        weekdayList.innerHTML = '';
+        const s = startInput.valueAsDate, e = endInput.valueAsDate;
+        if (!s || !e || s>e) return;
+        for (let d=new Date(s); d<=e; d.setDate(d.getDate()+1)) {
+          const row = document.createElement('div');
+          const cb  = document.createElement('input'); cb.type='checkbox'; cb.dataset.date=d.toISOString().slice(0,10);
+          const lbl = document.createElement('span');
+          lbl.textContent = d.toLocaleDateString('it-IT',{weekday:'short',day:'numeric'});
+          const btn = document.createElement('button'); btn.className='btn-icon';
+          btn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#006064" stroke-width="2" fill="none"/><path d="M12 8v4l3 3" stroke="#006064" stroke-width="2" fill="none"/></svg>`;
+          const selTimes = document.createElement('div'); selTimes.className='selected-times';
+          btn.addEventListener('click', () => {
+            ctx = { cb, selTimes };
+            buildHours();
+            tpModal.classList.add('active');
+          });
+          row.append(cb, lbl, btn, selTimes);
+          weekdayList.append(row);
+        }
+      }
+      startInput.addEventListener('change', buildDays);
+      endInput.  addEventListener('change', buildDays);
+
+      function buildHours() {
+        hourList.innerHTML = '';
+        for (let h=7; h<=20; h++) {
+          const hr = String(h).padStart(2,'0');
+          const div = document.createElement('div'); div.className='hour-row';
+          const cb  = document.createElement('input'); cb.type='checkbox';
+          const sh  = document.createElement('select');
+          for (let hh=7; hh<=20; hh++){
+            const o = document.createElement('option');
+            o.value = o.textContent = String(hh).padStart(2,'0');
+            if (o.value===hr) o.selected = true;
+            sh.append(o);
+          }
+          const sm = document.createElement('select');
+          ['00','15','30','45'].forEach(m=>{
+            const o = document.createElement('option');
+            o.value = o.textContent = m;
+            sm.append(o);
+          });
+          div.append(cb, sh, document.createTextNode(':'), sm);
+          hourList.append(div);
+        }
+      }
+
+      selectAll.addEventListener('click', e => {
+        hourList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = e.target.checked);
+      });
+
+      tpSave.addEventListener('click', () => {
+        const times = [];
+        hourList.querySelectorAll('.hour-row').forEach(r => {
+          const [c, sh, , sm] = r.children;
+          if (c.checked) times.push(`${sh.value}:${sm.value}`);
+        });
+        times.sort();
+        ctx.selTimes.innerHTML = times.map(t=>`<span>${t}</span>`).join('');
+        tpModal.classList.remove('active');
+      });
+
+      wizSave.addEventListener('click', async () => {
+        const ops = [];
+        weekdayList.querySelectorAll('div').forEach(row => {
+          const c = row.querySelector('input[type=checkbox]');
+          if (!c.checked) return;
+          const date = c.dataset.date;
+          row.querySelectorAll('.selected-times span').forEach(span => {
+            ops.push(addDoc(collection(db,'slots'), {
+              date,
+              year:  +date.slice(0,4),
+              month: +date.slice(5,7),
+              time:  span.textContent,
+              nome:    '',
+              telefono:'',
+              libero:  true,
+              visibile:true,
+              dove:    ''
+            }));
+          });
+        });
+        await Promise.all(ops);
+        wizModal.classList.remove('active');
+        renderCalendar(new Date());
+      });
+    }
+  </script>
+</body>
+</html>
