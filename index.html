@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Login</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,18 +10,18 @@
   <div class="card">
     <h2>Accedi</h2>
     <form id="login-form" autocomplete="off">
-      <input
-        type="text"
-        id="username"
-        placeholder="Username"
-        autocomplete="username"
+      <input 
+        type="text" 
+        id="username" 
+        placeholder="Username" 
+        autocomplete="username" 
         required
       >
-      <input
-        type="password"
-        id="password"
-        placeholder="Password"
-        autocomplete="current-password"
+      <input 
+        type="password" 
+        id="password" 
+        placeholder="Password" 
+        autocomplete="current-password" 
         required
       >
       <button type="submit" class="btn">
@@ -36,7 +36,8 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp } 
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore,
       collection,
@@ -45,6 +46,7 @@
       getDocs
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
+    // Config Firebase
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -53,38 +55,27 @@
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
-
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
     document.getElementById('login-form')
       .addEventListener('submit', async e => {
-        e.preventDefault();
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value;
-        document.getElementById('error-msg').textContent = '';
-
-        try {
-          const q    = query(
-            collection(db, 'users'),
-            where('username', '==', user),
-            where('password', '==', pass)
-          );
-          const snap = await getDocs(q);
-
-          if (!snap.empty) {
-            sessionStorage.setItem('user', user);
-            window.location.href = 'calendar.html';
-          } else {
-            document.getElementById('error-msg').textContent = 
-              'Username o password errati';
-          }
-        } catch(err) {
-          console.error(err);
-          document.getElementById('error-msg').textContent =
-            'Errore di connessione: ' + err.message;
-        }
-      });
+      e.preventDefault();
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+      const q    = query(
+        collection(db, 'users'),
+        where('username','==',user),
+        where('password','==',pass)
+      );
+      const snap = await getDocs(q);
+      if (snap.size > 0) {
+        sessionStorage.setItem('user', user);
+        window.location.href = 'calendar.html';
+      } else {
+        document.getElementById('error-msg').textContent = 'Credenziali errate';
+      }
+    });
   </script>
 </body>
 </html>
