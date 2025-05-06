@@ -1,13 +1,11 @@
-/* styles.css */
-
-/* — Reset globale — */
+/* Reset globale */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* — Palette azzurra “cute” — */
+/* Palette azzurra “cute” */
 :root {
   --bg: #e0f7fa;
   --card: #b2ebf2;
@@ -17,7 +15,6 @@
   --green: #a5d6a7;
 }
 
-/* — Corpo pagina — */
 body {
   font-family: sans-serif;
   background: var(--bg);
@@ -25,7 +22,7 @@ body {
   min-height: 100vh;
 }
 
-/* — Card & Login — */
+/* Login */
 body.login {
   display: flex;
   justify-content: flex-end;
@@ -33,6 +30,8 @@ body.login {
   height: 100vh;
   padding-right: 2rem;
 }
+
+/* Card */
 .card {
   background: var(--card);
   padding: 2rem;
@@ -40,7 +39,7 @@ body.login {
   box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
 }
 
-/* — Input & Button — */
+/* Input e bottoni */
 input[type="text"],
 input[type="password"],
 input[type="date"] {
@@ -57,20 +56,24 @@ input[type="date"] {
   border: none;
   border-radius: 4px;
   background: var(--accent);
+  color: white;
   cursor: pointer;
   font-size: 1rem;
-  color: white;
 }
 .btn svg {
-  width: 1rem; height: 1rem; margin-right: .5rem;
-  stroke: #006064; stroke-width: 2; fill: none;
+  width: 1rem;
+  height: 1rem;
+  margin-right: .5rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
 }
 .error {
   color: red;
   margin-top: .5rem;
 }
 
-/* — Topbar — */
+/* Topbar */
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -79,7 +82,7 @@ input[type="date"] {
   background: var(--card);
 }
 
-/* — Calendario — */
+/* Calendario */
 #calendar-container {
   padding: 1rem;
 }
@@ -88,7 +91,8 @@ table {
   border-collapse: collapse;
   background: var(--bg);
 }
-table th, table td {
+table th,
+table td {
   border: 1px solid var(--accent);
   padding: 4px;
   vertical-align: top;
@@ -99,8 +103,39 @@ table thead th {
   padding: .5rem 0;
   font-weight: bold;
 }
-.calendar-cell, table thead th {
+.calendar-cell,
+table thead th {
   text-align: center;
+}
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+.calendar-header h2 {
+  margin: 0 .5rem;
+  text-transform: capitalize;
+}
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .6rem;
+  border-radius: 6px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+.btn-nav svg {
+  width: 1rem;
+  height: 1rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
+}
+.calendar-cell.holiday > div:first-child {
+  color: red;
 }
 .calendar-cell {
   position: relative;
@@ -108,9 +143,6 @@ table thead th {
 }
 .calendar-cell div:first-child {
   font-weight: bold;
-}
-.calendar-cell.holiday > div:first-child {
-  color: red;
 }
 .slots-container {
   margin-top: 4px;
@@ -137,37 +169,14 @@ table thead th {
   cursor: pointer;
 }
 .btn-icon svg {
-  width: 1rem; height: 1rem;
-  stroke: #006064; stroke-width: 2; fill: none;
+  width: 1rem;
+  height: 1rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
 }
 
-/* — Nav mese — */
-.calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 1rem 0;
-}
-.calendar-header h2 {
-  margin: 0 .5rem;
-  text-transform: capitalize;
-}
-.btn-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: .4rem .6rem;
-  border-radius: 6px;
-  background: var(--accent);
-  border: none;
-  cursor: pointer;
-}
-.btn-nav svg {
-  width: 1rem; height: 1rem;
-  stroke: #006064; stroke-width: 2; fill: none;
-}
-
-/* — Modali generici — */
+/* Modali generici */
 .modal {
   display: none;
   position: fixed;
@@ -188,32 +197,41 @@ table thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  /* via libera all’altezza:
-     il contenuto espande il modal-content */
+  /* si allunga in altezza secondo contenuto */
 }
 .close-btn {
   position: absolute;
-  top: .5rem; right: .5rem;
-  background: none; border: none;
-  font-size: 1.2rem; color: var(--text);
+  top: .5rem;
+  right: .5rem;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text);
   cursor: pointer;
 }
 
-/* — Datepicker affiancati — */
+/* Datepicker group */
 .datepicker-group {
-  display: flex; gap: 1rem; margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 .datepicker-field {
-  flex: 1; display: flex; flex-direction: column;
-  font-weight: bold; color: var(--text);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+  color: var(--text);
 }
 .datepicker-field input[type="date"] {
-  margin-top: .5rem; padding: .5rem;
-  border: var(--input-border); border-radius: 8px;
+  margin-top: .5rem;
+  padding: .5rem;
+  border: var(--input-border);
+  border-radius: 8px;
   width: 100%;
 }
 
-/* — Lista statica giorni della settimana — */
+/* Lista dinamica giorni */
 #weekday-list {
   margin-bottom: 1rem;
 }
@@ -231,21 +249,43 @@ table thead th {
   margin-right: .5rem;
 }
 .weekday-row span {
-  flex: 1; text-align: center; color: var(--text);
+  flex: 1;
+  text-align: center;
+  color: var(--text);
 }
 
-/* — Tasto orologio — */
+/* Selected-times “pillole” */
+.selected-times {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin-left: .5rem;
+}
+.selected-times span {
+  background: white;
+  color: var(--text);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: .8rem;
+}
+
+/* Tasto orologio */
 .clock-btn {
   background: var(--accent);
-  border: none; border-radius: 4px; padding: .3rem;
+  border: none;
+  border-radius: 4px;
+  padding: .3rem;
   cursor: pointer;
 }
 .clock-btn svg {
-  width: 1rem; height: 1rem;
-  stroke: #006064; stroke-width: 2; fill: none;
+  width: 1rem;
+  height: 1rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
 }
 
-/* — Conferma orari — */
+/* Conferma orari */
 #timepicker-save {
   margin-top: .5rem;
 }
