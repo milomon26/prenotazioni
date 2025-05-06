@@ -1,20 +1,28 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Calendario</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!-- Topbar -->
   <header class="topbar">
     <button id="logout-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2"/></svg>
+      <!-- Logout icon -->
+      <svg viewBox="0 0 24 24">
+        <path d="M16 17l5-5-5-5M21 12H9" />
+        <rect x="3" y="4" width="12" height="16" rx="2" ry="2" />
+      </svg>
       Logout
     </button>
     <button id="wizard-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      <!-- Wizard star icon -->
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 
+                 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/>
+      </svg>
       Wizard
     </button>
   </header>
@@ -32,16 +40,18 @@
       <div class="datepicker-group">
         <div class="datepicker-field">
           <label for="start-date">Inizio:</label>
-          <input type="date" id="start-date" required>
+          <input type="date" id="start-date" required />
         </div>
         <div class="datepicker-field">
           <label for="end-date">Fine:</label>
-          <input type="date" id="end-date" required>
+          <input type="date" id="end-date" required />
         </div>
       </div>
       <div id="weekday-list"></div>
       <button id="wizard-save" class="btn">
-        <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        <svg viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7"/>
+        </svg>
         Salva slot
       </button>
     </div>
@@ -51,20 +61,22 @@
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn" type="button">&times;</button>
-      <label><input type="checkbox" id="select-all"> Seleziona tutto</label>
+      <label>
+        <input type="checkbox" id="select-all" /> Seleziona tutto
+      </label>
       <div id="hour-list"></div>
       <button id="timepicker-save" class="btn">Conferma orari</button>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp }            from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
       addDoc, updateDoc, deleteDoc, doc
-    }                                     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // — CONFIGURAZIONE FIREBASE — (CON PROJECTID!)
+    // — 1) Configurazione Firebase (includi il tuo projectId!) —
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -73,15 +85,38 @@
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
-
-    // Inizializzo Firebase e Firestore
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // — FUNZIONI DI SUPPORTO (festività, login, renderCalendar, attachWizardLogic) —
-    // Copia il codice delle tue funzioni qui, senza modificare il blocco di config!
-    // renderCalendar, attachWizardLogic, calculateEaster, getHolidays, ecc.
-    // Esempio di controllo login:
+    // — 2) Calcolo festività italiane (incluse Pasqua/Pasquetta) —
+    function calculateEaster(y) {
+      const a=y%19,b=Math.floor(y/100),c=y%100;
+      const d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25);
+      const g=Math.floor((b-f+1)/3),h=(19*a + b - d - g +15)%30;
+      const i=Math.floor(c/4),k=c%4;
+      const L=(32+2*e+2*i -h -k)%7;
+      const m=Math.floor((a+11*h+22*L)/451);
+      const month=Math.floor((h+L-7*m+114)/31),
+            day=((h+L-7*m+114)%31)+1;
+      return new Date(y,month-1,day);
+    }
+    function getHolidays(y) {
+      const pad = n=>String(n).padStart(2,'0'),
+            eas = calculateEaster(y),
+            em=eas.getMonth()+1,ed=eas.getDate(),
+            pas=`${y}-${pad(em)}-${pad(ed)}`,
+            pmo=new Date(eas); pmo.setDate(ed+1);
+      const pm=pmo.getMonth()+1,pd=pmo.getDate(),
+            pasq=`${y}-${pad(pm)}-${pad(pd)}`;
+      return [
+        `${y}-01-01`,` ${y}-01-06`,pas,pasq,
+        `${y}-04-25`,` ${y}-05-01`,` ${y}-06-02`,
+        `${y}-06-29`,` ${y}-08-15`,` ${y}-11-01`,
+        `${y}-12-08`,` ${y}-12-25`,` ${y}-12-26`
+      ].map(s=>s.trim());
+    }
+
+    // — 3) Controllo login + Logout —
     if (!sessionStorage.getItem('user')) {
       window.location.href = 'index.html';
     }
@@ -90,10 +125,28 @@
       window.location.href = 'index.html';
     };
 
+    // — 4) Al caricamento, render + Wizard —
     window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(new Date());
       attachWizardLogic();
     });
-  </script>
-</body>
-</html>
+
+    // — 5) Funzione renderCalendar completa —
+    async function renderCalendar(dateObj) {
+      const container = document.getElementById('calendar-container');
+      container.innerHTML = '';
+
+      const y       = dateObj.getFullYear(),
+            m       = dateObj.getMonth(),
+            dim     = new Date(y,m+1,0).getDate(),
+            rawF    = new Date(y,m,1).getDay(),    // 0=Dom…6=Sab
+            firstD  = (rawF + 6) % 7,              // 0=Lun…6=Dom
+            rows    = Math.ceil((firstD + dim)/7),
+            hols    = getHolidays(y),
+            wds     = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+      // — Header mese & nav —
+      const nav = document.createElement('div'); nav.className='calendar-header';
+      let mn = dateObj.toLocaleString('it-IT',{month:'long'});
+      mn = mn.charAt(0).toUpperCase()+mn.slice(1);
+      const bp
