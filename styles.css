@@ -22,57 +22,6 @@ body {
   min-height: 100vh;
 }
 
-/* Login */
-body.login {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  height: 100vh;
-  padding-right: 2rem;
-}
-
-/* Card */
-.card {
-  background: var(--card);
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-}
-
-/* Input e bottoni */
-input[type="text"],
-input[type="password"],
-input[type="date"] {
-  width: 100%;
-  margin: .5rem 0;
-  padding: .5rem;
-  border: var(--input-border);
-  border-radius: 8px;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  padding: .5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
-}
-.btn svg {
-  width: 1rem;
-  height: 1rem;
-  margin-right: .5rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
-}
-.error {
-  color: red;
-  margin-top: .5rem;
-}
-
 /* Topbar */
 .topbar {
   display: flex;
@@ -80,6 +29,27 @@ input[type="date"] {
   align-items: center;
   padding: 1rem;
   background: var(--card);
+}
+
+/* Bottoni */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: #006064;
+  stroke-width: 2;
+  fill: none;
 }
 
 /* Calendario */
@@ -180,7 +150,7 @@ table thead th {
 .modal {
   display: none;
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top:0; left:0; right:0; bottom:0;
   background: rgba(0,0,0,0.4);
   justify-content: center;
   align-items: center;
@@ -197,7 +167,7 @@ table thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  /* si allunga in altezza secondo contenuto */
+  /* lascia crescere l’altezza secondo contenuto */
 }
 .close-btn {
   position: absolute;
@@ -210,7 +180,7 @@ table thead th {
   cursor: pointer;
 }
 
-/* Datepicker group */
+/* Datepicker affiancati */
 .datepicker-group {
   display: flex;
   gap: 1rem;
@@ -231,7 +201,7 @@ table thead th {
   width: 100%;
 }
 
-/* Lista dinamica giorni */
+/* Lista giorni dinamica */
 #weekday-list {
   margin-bottom: 1rem;
 }
@@ -254,7 +224,7 @@ table thead th {
   color: var(--text);
 }
 
-/* Selected-times “pillole” */
+/* Pillole orari selezionati */
 .selected-times {
   display: inline-flex;
   flex-wrap: wrap;
