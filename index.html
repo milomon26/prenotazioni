@@ -13,7 +13,6 @@
       <input 
         type="text" 
         id="username" 
-        name="username" 
         placeholder="Username" 
         autocomplete="username" 
         required
@@ -21,16 +20,12 @@
       <input 
         type="password" 
         id="password" 
-        name="password" 
         placeholder="Password" 
         autocomplete="current-password" 
         required
       >
       <button type="submit" class="btn">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" fill="#fff"/>
-          <path d="M10 8l4 4-4 4" stroke="#006064" stroke-width="2" fill="none"/>
-        </svg>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M10 8l4 4-4 4" stroke="#006064" stroke-width="2" fill="none"/></svg>
         Accedi
       </button>
     </form>
@@ -46,35 +41,35 @@
       query,
       where,
       getDocs
-    } 
-      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // La tua configurazione Firebase
+    // 1) Configurazione Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
-      authDomain: "prenotazioni-app-87467.firebaseapp.com",
-      projectId: "prenotazioni-app-87467",
-      storageBucket: "prenotazioni-app-87467.firebasestorage.app",
+      apiKey:            "AIzaSyBTc-IEX2IlfQXwL2n-r-lbWepxys0dEco",
+      authDomain:        "prenotazioni-app-87467.firebaseapp.com",
+      projectId:         "prenotazioni-app-87467",
+      storageBucket:     "prenotazioni-app-87467.appspot.com",  // corretta
       messagingSenderId: "322391103742",
-      appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
+      appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
 
-    // Inizializza Firebase & Firestore
+    // 2) Inizializzo Firebase & Firestore
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
+    // 3) Gestione submit
     document.getElementById('login-form')
-      .addEventListener('submit', async e => {
+      .addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      // Recupero valori
-      const user = e.target.username.value.trim();
-      const pass = e.target.password.value;
+      // 4) Leggo username & password
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
       console.log('Tentativo login:', user, pass);
 
       try {
-        // Query su users
-        const q = query(
+        // 5) Query su users
+        const q    = query(
           collection(db, 'users'),
           where('username', '==', user),
           where('password', '==', pass)
@@ -82,8 +77,8 @@
         const snap = await getDocs(q);
         console.log('Documenti trovati:', snap.size);
 
-        if (!snap.empty) {
-          // Se c'è almeno un doc → redirect
+        if (snap.size > 0) {
+          // 6) Redirect se esiste almeno un doc
           window.location.href = 'calendar.html';
         } else {
           document.getElementById('error-msg')
@@ -91,9 +86,10 @@
         }
 
       } catch(err) {
+        // 7) Mostro errore in caso di permessi o altro
         console.error('Errore Firestore:', err);
         document.getElementById('error-msg')
-          .textContent = 'Errore interno: ' + err.message;
+          .textContent = 'Errore di connessione: ' + err.message;
       }
     });
   </script>
