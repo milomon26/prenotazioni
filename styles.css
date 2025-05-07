@@ -39,7 +39,19 @@ body {
 }
 .btn:hover { opacity:.8; }
 
-/* NAV MESE */
+/* NAV MESE (ora funzionano in orizzontale) */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin: 1rem 0;
+}
+.calendar-header h2 {
+  margin: 0;
+}
+
+/* NAV BUTTON */
 .btn-nav {
   width:28px; height:28px;
   background:var(--accent);
@@ -64,9 +76,7 @@ body {
 }
 
 /* CALENDARIO */
-#calendar-container {
-  padding:1rem;
-}
+#calendar-container { padding:1rem; }
 table {
   width:100%;
   border-collapse:collapse;
@@ -87,12 +97,8 @@ thead th {
   position:relative;
   min-height:180px;
 }
-.calendar-cell div:first-child {
-  font-weight:bold;
-}
-.calendar-cell.holiday div:first-child {
-  color:red;
-}
+.calendar-cell div:first-child { font-weight:bold; }
+.calendar-cell.holiday div:first-child { color:red; }
 
 /* SLOT */
 .slots-container {
@@ -193,6 +199,5 @@ thead th {
   animation:spin 1s linear infinite;
 }
 @keyframes spin {
-  from{transform:rotate(0);}
-  to{transform:rotate(360deg);}
+  from{transform:rotate(0);} to{transform:rotate(360deg);}
 }
