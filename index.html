@@ -2,12 +2,13 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login - Prenotazioni</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <div class="login-container">
     <div class="login-card">
       <h2>Accedi</h2>
@@ -20,41 +21,47 @@
   </div>
 
   <script type="module">
-    import { initializeApp }       from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore,
-             collection, query,
-             where, getDocs }
-      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // Config Firebase
-    initializeApp({
+    const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
       projectId:         "prenotazioni-app-87467",
       storageBucket:     "prenotazioni-app-87467.appspot.com",
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
-    });
-    const db = getFirestore();
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-    document.getElementById('login-btn').onclick = async () => {
+    document.getElementById('login-btn').onclick = async (e) => {
+      e.preventDefault();
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value.trim();
       if (!u || !p) {
         alert('Inserisci username e password');
         return;
       }
+      // Query su collection "users"
       const q = query(
-        collection(db,'users'),
-        where('username','==',u),
-        where('password','==',p)
+        collection(db, 'users'),
+        where('username', '==', u),
+        where('password', '==', p)
       );
       const snap = await getDocs(q);
       if (snap.empty) {
-        alert('Username o password errati');
+        alert('Credenziali non valide');
       } else {
         sessionStorage.setItem('user', u);
-        window.location = 'calendar.html';
+        location.href = 'calendar.html';
       }
     };
   </script>
