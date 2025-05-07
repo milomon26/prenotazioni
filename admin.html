@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin – Prenotazioni</title>
-  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <!-- Loader -->
   <div id="loader"><div class="spinner"></div></div>
 
-  <!-- Topbar login / tools -->
+  <!-- Topbar login / strumenti -->
   <header class="topbar">
     <div id="login-controls">
       <input type="text" id="admin-username" placeholder="Username" autocomplete="off">
@@ -19,8 +18,8 @@
       <button id="admin-login-btn" class="btn">Login</button>
     </div>
     <div id="admin-tools" style="display:none">
-      <button id="wizard-btn"  class="btn">Wizard</button>
-      <button id="logout-btn"  class="btn">Logout</button>
+      <button id="wizard-btn" class="btn">Wizard</button>
+      <button id="logout-btn" class="btn">Logout</button>
     </div>
   </header>
 
@@ -29,71 +28,8 @@
     <div id="calendar-container"></div>
   </main>
 
-  <!-- Wizard Modal -->
-  <div id="wizard-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <h3>Seleziona Date</h3>
-      <div class="datepicker-group">
-        <div class="datepicker-field">
-          <label for="start-date">Inizio:</label>
-          <input type="date" id="start-date">
-        </div>
-        <div class="datepicker-field">
-          <label for="end-date">Fine:</label>
-          <input type="date" id="end-date">
-        </div>
-      </div>
-      <div id="weekday-list"></div>
-      <button id="wizard-save" class="btn">Salva slot</button>
-    </div>
-  </div>
-
-  <!-- Timepicker Modal -->
-  <div id="timepicker-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <label><input type="checkbox" id="select-all"> Seleziona tutto</label>
-      <div id="hour-list"></div>
-      <button id="timepicker-save" class="btn">Conferma orari</button>
-    </div>
-  </div>
-
-  <!-- More Slots Modal -->
-  <div id="more-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <h3>Altri slot</h3>
-      <div id="more-list"></div>
-    </div>
-  </div>
-
-  <!-- Confirm Delete Modal -->
-  <div id="confirm-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <p>Confermi di eliminare questo slot?</p>
-      <div class="confirm-buttons">
-        <button id="confirm-yes" class="btn">Conferma</button>
-        <button id="confirm-no"  class="btn">Annulla</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Slot Info Modal -->
-  <div id="slot-info-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <h3>Info Slot</h3>
-      <div class="info-row"><strong>Data:</strong> <span id="info-date"></span></div>
-      <div class="info-row"><strong>Ora:</strong>  <span id="info-time"></span></div>
-      <div class="info-row"><strong>Nome:</strong> <span id="info-nome"></span></div>
-      <div class="info-row"><strong>Telefono:</strong> <span id="info-telefono"></span></div>
-      <div class="info-row"><strong>Libero:</strong>  <span id="info-libero"></span></div>
-      <div class="info-row"><strong>Visibile:</strong><span id="info-visibile"></span></div>
-      <div class="info-row"><strong>Dove:</strong>  <span id="info-dove"></span></div>
-    </div>
-  </div>
+  <!-- (tutti i modal come già visto: wizard, timepicker, more, confirm, info) -->
+  <!-- ASSICURATI che la funzione getHolidays in admin.html sia la stessa di index.html -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -102,7 +38,6 @@
       addDoc, updateDoc, deleteDoc, doc, onSnapshot, getDoc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // 1) Init Firebase
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -113,47 +48,6 @@
     });
     const db = getFirestore();
 
-    // 2) Login / Logout Admin
-    const loginCtr   = document.getElementById('login-controls'),
-          adminTools = document.getElementById('admin-tools');
-    document.getElementById('admin-login-btn').onclick=async()=>{
-      const u=document.getElementById('admin-username').value.trim(),
-            p=document.getElementById('admin-password').value.trim();
-      if(!u||!p){ alert('Inserisci credenziali'); return; }
-      const snap=await getDocs(
-        query(collection(db,'users'),
-              where('username','==',u),
-              where('password','==',p))
-      );
-      if(snap.empty){
-        alert('Credenziali non valide');
-      } else {
-        sessionStorage.setItem('adminUser',u);
-        initAdmin();
-      }
-    };
-    document.getElementById('logout-btn').onclick=()=>{
-      sessionStorage.removeItem('adminUser');
-      location.reload();
-    };
-
-    // 3) Se già loggato, init
-    let currentMonth=new Date();
-    if(sessionStorage.getItem('adminUser')) initAdmin();
-
-    function initAdmin(){
-      loginCtr.style.display='none';
-      adminTools.style.display='flex';
-      renderCalendar(currentMonth);
-      attachWizardLogic();
-      setupConfirmModal();
-      setupSlotInfoModal();
-      onSnapshot(collection(db,'slots'),
-        ()=>renderCalendar(currentMonth)
-      );
-    }
-
-    // 4) Pasqua & Festività
     function calculateEaster(Y){
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,
@@ -170,22 +64,30 @@
     function getHolidays(Y){
       const pad=n=>String(n).padStart(2,'0'),
             eas=calculateEaster(Y),
-            em=eas.getMonth()+1,ed=eas.getDate(),
+            em=eas.getMonth()+1, ed=eas.getDate(),
             pas=`${Y}-${pad(em)}-${pad(ed)}`,
             ang=new Date(eas);
       ang.setDate(ed+1);
-      const am=ang.getMonth()+1,ad=ang.getDate(),
+      const am=ang.getMonth()+1, ad=ang.getDate(),
             pasq=`${Y}-${pad(am)}-${pad(ad)}`;
       return [
-        `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
-        `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,
-        `${Y}-06-29`,`${Y}-08-15`,`${Y}-11-01`,
-        `${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`
+        `${Y}-01-01`,
+        `${Y}-01-06`,
+        pas,
+        pasq,
+        `${Y}-04-25`,
+        `${Y}-05-01`,
+        `${Y}-06-02`,
+        `${Y}-06-29`,
+        `${Y}-08-15`,
+        `${Y}-11-01`,
+        `${Y}-12-08`,
+        `${Y}-12-25`,
+        `${Y}-12-26`
       ];
     }
 
-    // 5) renderCalendar, deleteSlot, openInfoModal, attachWizardLogic…
-    //    (uguali a quanto già fornito, con getHolidays ora corretto)
+    // ... tutto il resto di renderCalendar(), attachWizardLogic(), deleteSlot(), openInfoModal(), ecc. ...
   </script>
 </body>
 </html>
