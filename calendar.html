@@ -8,6 +8,9 @@
 </head>
 <body>
 
+  <!-- Loader -->
+  <div id="loader"><div class="spinner"></div></div>
+
   <!-- Topbar -->
   <header class="topbar">
     <button id="logout-btn" class="btn">
@@ -40,7 +43,6 @@
           <input type="date" id="end-date" required />
         </div>
       </div>
-      <!-- 7 giorni fissi -->
       <div id="weekday-list"></div>
       <button id="wizard-save" class="btn">
         <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
@@ -60,13 +62,13 @@
   </div>
 
   <script type="module">
-    import { initializeApp }            from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { initializeApp }      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
       getFirestore, collection, getDocs,
       addDoc, updateDoc, deleteDoc, doc
-    }                                     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // 1) Config Firebase
+    // Config Firebase
     const firebaseConfig = {
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -78,7 +80,7 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
-    // 2) Festività italiane
+    // Calcolo festività italiane
     function calculateEaster(Y) {
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
@@ -106,23 +108,25 @@
       ];
     }
 
-    // 3) Login check & logout
-    if (!sessionStorage.getItem('user')) {
-      window.location.href = 'index.html';
-    }
-    document.getElementById('logout-btn').onclick = () => {
+    // Login + logout
+    if (!sessionStorage.getItem('user')) location.href='index.html';
+    document.getElementById('logout-btn').onclick = ()=>{
       sessionStorage.removeItem('user');
-      window.location.href = 'index.html';
+      location.href='index.html';
     };
 
-    // 4) On load
+    // Stato globale mese corrente
+    let currentMonthDate = new Date();
+
+    // All’avvio
     window.addEventListener('DOMContentLoaded', () => {
-      renderCalendar(new Date());
+      renderCalendar(currentMonthDate);
       attachWizardLogic();
     });
 
-    // 5) renderCalendar
+    // Render calendario
     async function renderCalendar(dateObj) {
+      currentMonthDate = dateObj;
       const container = document.getElementById('calendar-container');
       container.innerHTML = '';
 
@@ -130,7 +134,7 @@
             M     = dateObj.getMonth(),
             dim   = new Date(Y,M+1,0).getDate(),
             first = (new Date(Y,M,1).getDay()+6)%7,
-            rows  = Math.ceil((first + dim)/7),
+            rows  = Math.ceil((first+dim)/7),
             hols  = getHolidays(Y),
             wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
@@ -139,106 +143,95 @@
       let mName = dateObj.toLocaleString('it-IT',{month:'long'});
       mName = mName.charAt(0).toUpperCase()+mName.slice(1);
       const btnP = document.createElement('button'); btnP.className='btn-nav';
-      btnP.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
-      btnP.onclick = ()=>renderCalendar(new Date(Y,M-1,1));
-      const title = document.createElement('h2'); title.textContent = `${mName} ${Y}`;
+      btnP.innerHTML=`<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
+      btnP.onclick=()=>renderCalendar(new Date(Y,M-1,1));
+      const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
       const btnN = document.createElement('button'); btnN.className='btn-nav';
-      btnN.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
-      btnN.onclick = ()=>renderCalendar(new Date(Y,M+1,1));
+      btnN.innerHTML=`<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
+      btnN.onclick=()=>renderCalendar(new Date(Y,M+1,1));
       nav.append(btnP,title,btnN);
       container.append(nav);
 
       // Tabella
-      const tbl   = document.createElement('table'),
-            thead = tbl.createTHead(),
-            hr    = thead.insertRow();
-      wds.forEach(d=>{
-        const th = document.createElement('th');
-        th.textContent = d;
-        hr.append(th);
-      });
-      const tbody = tbl.createTBody();
-      let day = 1;
-      for (let r=0; r<rows; r++){
-        const tr = tbody.insertRow();
-        for (let c=0; c<7; c++){
-          const td  = tr.insertCell(), idx = r*7 + c;
-          if (idx < first || day > dim) {
-            td.innerHTML = '';
+      const tbl=document.createElement('table'),
+            thead=tbl.createTHead(),
+            hr=thead.insertRow();
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; hr.append(th); });
+      const tbody=tbl.createTBody();
+      let day=1;
+      for(let r=0;r<rows;r++){
+        const tr=tbody.insertRow();
+        for(let c=0;c<7;c++){
+          const td=tr.insertCell(), idx=r*7+c;
+          if(idx<first||day>dim){
+            td.innerHTML='';
           } else {
-            const iso = `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className = 'calendar-cell';
-            td.dataset.date = iso;
-            if (c===6 || hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML = `<div>${day}</div><div class="slots-container"></div>`;
+            const iso=`${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            td.className='calendar-cell'; td.dataset.date=iso;
+            if(c===6||hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML=`<div>${day}</div><div class="slots-container"></div>`;
             day++;
           }
         }
       }
       container.append(tbl);
 
-      // Carica tutti gli slot
+      // Carica slot
       const snap = await getDocs(collection(db,'slots'));
       snap.forEach(ds=>{
-        const s = ds.data(),
-              cell = document.querySelector(
+        const s=ds.data(),
+              cell=document.querySelector(
                 `.calendar-cell[data-date="${s.date}"] .slots-container`
               );
-        if (!cell) return;
-        const el = document.createElement('div');
-        el.className = 'slot '+(s.libero?'free':'');
-        el.innerHTML = `
+        if(!cell) return;
+        const el=document.createElement('div');
+        el.className='slot '+(s.libero?'free':'');
+        el.innerHTML=`
           <span>${s.time}</span>
           <input type="checkbox" ${s.visibile?'checked':''}
                  onchange="updateSlotVisibility(this,'${ds.id}')">
           <button class="btn-icon" onclick="deleteSlot('${ds.id}',this)">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
           </button>
         `;
         cell.append(el);
       });
     }
 
-    window.updateSlotVisibility = async (cb,id) => {
+    window.updateSlotVisibility=async(cb,id)=>{
       await updateDoc(doc(db,'slots',id),{visibile:cb.checked});
     };
-    window.deleteSlot = async (id,btn) => {
+    window.deleteSlot=async(id,btn)=>{
       await deleteDoc(doc(db,'slots',id));
       btn.closest('.slot').remove();
     };
 
-    // 6) Wizard & Timepicker
-    function attachWizardLogic() {
-      const wz    = document.getElementById('wizard-btn'),
-            wm    = document.getElementById('wizard-modal'),
-            tp    = document.getElementById('timepicker-modal'),
-            sd    = document.getElementById('start-date'),
-            ed    = document.getElementById('end-date'),
-            wl    = document.getElementById('weekday-list'),
-            hl    = document.getElementById('hour-list'),
-            sa    = document.getElementById('select-all'),
-            ws    = document.getElementById('wizard-save'),
-            ts    = document.getElementById('timepicker-save'),
-            closes= document.querySelectorAll('.close-btn');
-      let ctx = null;
+    // Wizard & Timepicker
+    function attachWizardLogic(){
+      const loader = document.getElementById('loader'),
+            wz     = document.getElementById('wizard-btn'),
+            wm     = document.getElementById('wizard-modal'),
+            tp     = document.getElementById('timepicker-modal'),
+            sd     = document.getElementById('start-date'),
+            ed     = document.getElementById('end-date'),
+            wl     = document.getElementById('weekday-list'),
+            hl     = document.getElementById('hour-list'),
+            sa     = document.getElementById('select-all'),
+            ws     = document.getElementById('wizard-save'),
+            ts     = document.getElementById('timepicker-save'),
+            closes = document.querySelectorAll('.close-btn');
+      let ctx=null;
 
-      // click Wizard: mostra datepicker manuali + 7 giorni
-      wz.onclick = () => {
+      wz.onclick = ()=>{
         wl.innerHTML = '';
         ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-          .forEach(d => {
-            const row = document.createElement('div'); row.className='weekday-row';
-            const cb  = document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
-            const lbl = document.createElement('span'); lbl.textContent=d;
-            const sel = document.createElement('div'); sel.className='selected-times';
-            const btn = document.createElement('button'); btn.type='button'; btn.className='clock-btn';
-            btn.innerHTML = `
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 8v4l3 3"/>
-              </svg>`;
+          .forEach(d=>{
+            const row=document.createElement('div'); row.className='weekday-row';
+            const cb=document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
+            const lbl=document.createElement('span'); lbl.textContent=d;
+            const sel=document.createElement('div'); sel.className='selected-times';
+            const btn=document.createElement('button'); btn.type='button'; btn.className='clock-btn';
+            btn.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>`;
             btn.onclick=()=>{
               ctx={cb,sel};
               buildHours();
@@ -249,23 +242,22 @@
           });
         wm.classList.add('active');
       };
+      closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
-      closes.forEach(b=>b.onclick = ()=>b.closest('.modal').classList.remove('active'));
-
-      function buildHours() {
+      function buildHours(){
         hl.innerHTML = '';
         const existing = Array.from(ctx.sel.querySelectorAll('span')).map(sp=>sp.textContent);
-        for (let h=7; h<=20; h++){
+        for(let h=7;h<=20;h++){
           const hr=String(h).padStart(2,'0'),
                 div=document.createElement('div'),
-                c = document.createElement('input'),
+                c=document.createElement('input'),
                 sh=document.createElement('select'),
                 sm=document.createElement('select');
           div.className='hour-row'; c.type='checkbox';
-          for (let hh=7; hh<=20; hh++){
+          for(let hh=7;hh<=20;hh++){
             const o=document.createElement('option');
             o.value=o.textContent=String(hh).padStart(2,'0');
-            if (o.value===hr) o.selected=true;
+            if(o.value===hr) o.selected=true;
             sh.append(o);
           }
           ['00','15','30','45'].forEach(mm=>{
@@ -274,17 +266,17 @@
             sm.append(o);
           });
           const match=existing.find(t=>t.startsWith(hr+':'));
-          if (match){ c.checked=true; sm.value=match.split(':')[1]; }
+          if(match){ c.checked=true; sm.value=match.split(':')[1]; }
           div.append(c,sh,document.createTextNode(':'),sm);
           hl.append(div);
         }
       }
 
-      if (sa) sa.onclick = e=>{
+      if(sa) sa.onclick=e=>{
         hl.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=e.target.checked);
       };
 
-      if (ts) ts.onclick = ()=>{
+      if(ts) ts.onclick=()=>{
         const times=[];
         hl.querySelectorAll('.hour-row').forEach(r=>{
           const c=r.querySelector('input[type=checkbox]'),
@@ -292,25 +284,24 @@
           if(c.checked) times.push(`${sh.value}:${sm.value}`);
         });
         times.sort();
-        ctx.sel.innerHTML = times.map(t=>`<span>${t}</span>`).join('');
+        ctx.sel.innerHTML=times.map(t=>`<span>${t}</span>`).join('');
         tp.classList.remove('active');
       };
 
-      if (ws) ws.onclick = async ()=>{
-        const start = sd.valueAsDate, end = ed.valueAsDate;
-        if (!start||!end||start>end) {
-          alert('Intervallo non valido'); 
-          return;
-        }
-        const ops = [];
+      if(ws) ws.onclick=async()=>{
+        const start=sd.valueAsDate, end=ed.valueAsDate;
+        if(!start||!end||start>end){ alert('Intervallo non valido'); return; }
+        // show loader
+        loader.classList.add('active');
+        const ops=[];
         wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const c = row.querySelector('input[type=checkbox]');
-          if (!c.checked) return;
-          const wd = c.dataset.day;
-          for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-            const iso  = d.toISOString().slice(0,10),
-                  name = d.toLocaleDateString('it-IT',{weekday:'long'});
-            if (name === wd) {
+          const c=row.querySelector('input[type=checkbox]');
+          if(!c.checked) return;
+          const wd=c.dataset.day;
+          for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+            const iso=d.toISOString().slice(0,10),
+                  name=d.toLocaleDateString('it-IT',{weekday:'long'});
+            if(name===wd){
               row.querySelectorAll('.selected-times span').forEach(sp=>{
                 ops.push(addDoc(collection(db,'slots'),{
                   date:      iso,
@@ -325,9 +316,13 @@
             }
           }
         });
-        await Promise.all(ops);
+        try {
+          await Promise.all(ops);
+        } finally {
+          loader.classList.remove('active');
+        }
         wm.classList.remove('active');
-        renderCalendar(new Date());
+        renderCalendar(currentMonthDate);
       };
     }
   </script>
