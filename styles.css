@@ -12,124 +12,41 @@
   --link-color: #00796b;
 }
 
-/* RESET BASE */
+/* RESET GLOBALE */
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  font-family: 'Nunito', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
+  font-family:'Nunito', sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
 }
 
-/* HEADER cliente */
-.header {
-  background: var(--card);
-  padding: .5rem 1rem;
-  display: flex;
-  justify-content: flex-end;
-}
-.admin-link, .btn.admin-link {
-  background: var(--accent);
-  color: white;
-  padding: .3rem .6rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: .9rem;
-  border: none;
-  cursor: pointer;
-  transition: opacity .2s;
-}
-.admin-link:hover { opacity:.8; }
-
-/* MODALI GENERALI */
-.modal {
-  display:none;
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,.4);
-  justify-content:center;
+/* TOPBAR ADMIN */
+.topbar {
+  display:flex;
+  justify-content:space-between;
   align-items:center;
-  z-index:10;
-}
-.modal.active { display:flex; }
-.modal-content {
-  position:relative;
+  padding:1rem;
   background:var(--card);
-  border:2px solid var(--accent);
-  border-radius:8px;
-  padding:1.5rem;
-  width:90%;max-width:400px;
 }
-.close-btn {
-  position:absolute;top:.5rem;right:.5rem;
-  background:none;border:none;
-  font-size:1.2rem;color:var(--text);
-  cursor:pointer;
-}
-
-/* LOGIN FORM */
-#login-modal .modal-content label {
-  font-weight:bold;
-  display:block;
-  margin-top:.5rem;
-}
-#login-modal .modal-content input {
-  width:100%;
+.topbar input {
   padding:.3rem .5rem;
   border:var(--input-border);
-  border-radius:6px;
-  margin-top:.25rem;
-}
-#login-modal .modal-content button.btn {
-  margin-top:1rem;
-  width:100%;
-}
-
-/* PULSANTI BASE compatti */
-.btn {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:.4rem;
-  background:var(--accent);
-  color:white;
-  border:none;
-  border-radius:6px;
-  padding:.3rem .6rem;
-  font-weight:600;
+  border-radius:4px;
+  margin-right:.5rem;
   font-size:.9rem;
-  cursor:pointer;
-  transition:opacity .2s;
 }
-.btn:hover { opacity:.8; }
-
-/* NAV MESE circolari */
-.btn-nav {
-  width:28px;height:28px;
-  background:var(--accent);
-  color:white;
-  border:none;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:1.1rem;
-  cursor:pointer;
-  transition:opacity .2s;
-}
-.btn-nav:hover { opacity:.8; }
+#admin-tools { display:flex; gap:.5rem; }
 
 /* CALENDARIO */
 #calendar-container { padding:1rem; }
 table {
-  width:100%;
-  border-collapse:collapse;
+  width:100%; border-collapse:collapse;
   background:var(--bg);
 }
-th, td {
+th,td {
   border:1px solid var(--accent);
-  padding:4px;
-  vertical-align:top;
+  padding:4px; vertical-align:top;
 }
 thead th {
   background:var(--card);
@@ -161,78 +78,189 @@ thead th {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:2px 4px;
-  margin-bottom:2px;
+  padding:4px 6px;
+  margin-bottom:4px;
   border-radius:4px;
-  font-size:.8rem;
+  font-size:.85rem;
   background:white;
-}
-.slot.free {
-  background:var(--green-light);
   cursor:pointer;
 }
-.slot.booked {
-  background:var(--red-light);
-}
-.more-link {
-  display:block;
-  text-align:center;
-  color:var(--link-color);
-  font-size:.8rem;
+.slot.free   { background:var(--green-light); }
+.slot.booked { background:var(--red-light); cursor:default; }
+
+/* Pulsante cestino */
+.btn-icon.trash {
+  background:none;
+  border:none;
+  padding:0;
   cursor:pointer;
-  margin-top:2px;
+  font-size:1rem;
+  line-height:1;
+}
+.btn-icon.trash:hover {
+  opacity:.7;
 }
 
-/* HEADER MESE */
+/* “VEDI ALTRI” */
+.more-container {
+  position:absolute;
+  bottom:4px; left:0;
+  width:100%; text-align:center;
+}
+.more-container a {
+  color:var(--link-color);
+  font-size:.85rem;
+  text-decoration:none;
+}
+.more-container a:hover {
+  text-decoration:underline;
+}
+
+/* NAV MESE */
 .calendar-header {
   display:flex;
   justify-content:center;
   align-items:center;
   margin:1rem 0;
 }
+.btn-nav {
+  width:28px; height:28px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; cursor:pointer;
+  transition:opacity .2s;
+}
+.btn-nav:hover { opacity:.8; }
 .calendar-header h2 {
   margin:0 .5rem;
   text-transform:capitalize;
 }
 
-/* BOOKING FORM */
-#booking-modal .modal-content label {
-  font-weight:bold;
-  display:block;
-  margin-top:.5rem;
+/* PULSANTI BASE */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:.4rem; background:var(--accent); color:white;
+  border:none; border-radius:6px;
+  padding:.4rem .8rem; font-weight:600; font-size:.9rem;
+  cursor:pointer; transition:opacity .2s;
 }
-#booking-modal .modal-content input {
-  width:100%;
-  padding:.3rem .5rem;
+.btn:hover { opacity:.8; }
+
+/* MODALI */
+.modal {
+  display:none;
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,.4);
+  justify-content:center; align-items:center;
+  z-index:10;
+}
+.modal.active { display:flex; }
+.modal-content {
+  position:relative;
+  background:var(--card);
+  border:2px solid var(--accent);
+  border-radius:8px;
+  padding:1.5rem;
+  width:90%; max-width:450px;
+  max-height:90vh; overflow-y:auto;
+}
+.close-btn {
+  position:absolute; top:.5rem; right:.5rem;
+  background:none; border:none;
+  font-size:1.2rem; color:var(--text);
+  cursor:pointer;
+}
+
+/* DATEPICKER GROUP */
+.datepicker-group {
+  display:flex; gap:1rem; margin-bottom:1rem;
+}
+.datepicker-field {
+  flex:1; display:flex; flex-direction:column;
+  font-weight:bold; color:var(--text);
+}
+.datepicker-field input[type="date"] {
+  margin-top:.5rem;
+  padding:.5rem;
   border:var(--input-border);
   border-radius:6px;
-  margin-top:.25rem;
 }
-#booking-modal .modal-content button.btn {
-  margin-top:1rem;
-  width:100%;
+
+/* GIORNI DELLA SETTIMANA */
+.weekday-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:.5rem 0;
+  border-top:1px solid var(--accent);
+}
+.weekday-row:first-child { border-top:none; }
+.weekday-row input[type="checkbox"] { margin-right:.5rem; }
+.weekday-row span { flex:1; text-align:left; }
+.selected-times {
+  display:inline-flex; flex-wrap:wrap; gap:.25rem;
+}
+.selected-times span {
+  background:white; border:var(--input-border);
+  border-radius:6px; padding:2px 6px;
+  font-size:.8rem; display:flex; align-items:center;
+}
+.remove-time {
+  background:none; border:none; margin-left:4px;
+  cursor:pointer; font-size:.9rem;
+}
+
+/* CLOCK BUTTON */
+.clock-btn {
+  background:var(--accent);
+  border:none; border-radius:4px;
+  padding:.3rem; cursor:pointer;
+  font-size:1rem; line-height:1;
+}
+
+/* TIMEPICKER */
+#hour-list .hour-row {
+  display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem;
+}
+#hour-list select {
+  background:white; border:var(--input-border);
+  border-radius:6px; padding:4px 8px; font-size:.9rem;
+}
+#select-all { transform:scale(1.2); margin-bottom:.5rem; }
+
+/* CONFIRM BUTTONS */
+.confirm-buttons {
+  display:flex; justify-content:space-around; margin-top:1rem;
 }
 
 /* LOADER */
 #loader {
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
+  display:none; position:fixed; top:0; left:0;
+  width:100%; height:100%;
   background:rgba(0,0,0,.3);
-  justify-content:center;
-  align-items:center;
+  justify-content:center; align-items:center;
   z-index:20;
 }
 #loader.active { display:flex; }
 .spinner {
-  width:40px;height:40px;
-  border:5px solid var(--card);
-  border-top:5px solid var(--accent);
+  width:50px; height:50px;
+  border:6px solid var(--card);
+  border-top:6px solid var(--accent);
   border-radius:50%;
   animation:spin 1s linear infinite;
 }
 @keyframes spin {
   from { transform:rotate(0deg); }
   to   { transform:rotate(360deg); }
+}
+
+/* SLOT INFO MODAL */
+.info-row {
+  margin: .5rem 0;
+}
+.info-row strong {
+  width: 80px; display:inline-block;
 }
