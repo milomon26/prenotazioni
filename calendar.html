@@ -1,291 +1,257 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Calendario</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+/* —————————————————————— */
+/* 1) STILI LOGIN PAGE   */
+/* —————————————————————— */
 
-  <!-- Loader -->
-  <div id="loader"><div class="spinner"></div></div>
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 2rem;
+  background: var(--bg);
+}
+.login-card {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.login-card h2 {
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.login-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.login-row input {
+  flex: 1;
+  padding: .5rem;
+  border: var(--input-border);
+  border-radius: 6px;
+}
+.login-row button.btn {
+  white-space: nowrap;
+}
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <button id="logout-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2"/></svg>
-      Logout
-    </button>
-    <button id="wizard-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
-      Wizard
-    </button>
-  </header>
+/* —————————————————————— */
+/* 2) VARI */
+/* —————————————————————— */
+:root {
+  --bg: #e0f7fa;
+  --card: #b2ebf2;
+  --accent: #4dd0e1;
+  --text: #006064;
+  --input-border: 2px solid var(--accent);
+  --green: #a5d6a7;
+}
 
-  <!-- Calendario -->
-  <main>
-    <div id="calendar-container"></div>
-  </main>
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+body {
+  font-family: sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
 
-  <!-- Wizard Modal -->
-  <div id="wizard-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <h3>Seleziona Date</h3>
-      <div class="datepicker-group">
-        <div class="datepicker-field">
-          <label for="start-date">Inizio:</label>
-          <input type="date" id="start-date" />
-        </div>
-        <div class="datepicker-field">
-          <label for="end-date">Fine:</label>
-          <input type="date" id="end-date" />
-        </div>
-      </div>
-      <div id="weekday-list"></div>
-      <button id="wizard-save" class="btn">Salva slot</button>
-    </div>
-  </div>
+/* —————————————————————— */
+/* 3) TOPBAR & BOTTONI     */
+/* —————————————————————— */
+.topbar {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 1rem;
+  background: var(--card);
+}
+.btn {
+  display: inline-flex; align-items: center;
+  gap: .5rem; padding: .5rem 1rem;
+  border: none; border-radius: 6px;
+  background: var(--accent); color: white;
+  cursor: pointer; font-size: 1rem;
+}
+.btn svg {
+  width: 1.2rem; height: 1.2rem;
+  stroke: #006064; stroke-width: 2; fill: none;
+}
 
-  <!-- Timepicker Modal -->
-  <div id="timepicker-modal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn">&times;</button>
-      <label><input type="checkbox" id="select-all" /> Seleziona tutto</label>
-      <div id="hour-list"></div>
-      <button id="timepicker-save" class="btn">Conferma orari</button>
-    </div>
-  </div>
+/* —————————————————————— */
+/* 4) CALENDARIO           */
+/* —————————————————————— */
+#calendar-container { padding: 1rem; }
+table {
+  width: 100%; border-collapse: collapse;
+  background: var(--bg);
+}
+th, td {
+  border: 1px solid var(--accent);
+  padding: 4px; vertical-align: top;
+}
+thead th {
+  background: var(--card);
+  text-align: center;
+  padding: .5rem 0;
+  font-weight: bold;
+}
+.calendar-cell { position: relative; height: 100px; }
+.calendar-cell div:first-child { font-weight: bold; }
+.calendar-cell.holiday > div:first-child { color: red; }
+.slots-container {
+  margin-top: 4px; max-height: 60px; overflow-y: auto;
+}
+.slot {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 2px 4px;
+  margin-bottom: 2px; border-radius: 4px;
+  font-size: .8rem; background: white;
+}
+.slot.free { background: var(--green); }
+.btn-icon {
+  background: none; border: none; padding: 0;
+  cursor: pointer;
+}
+.btn-icon svg {
+  width: 1rem; height: 1rem;
+  stroke: #006064; stroke-width: 2; fill: none;
+}
 
-  <script type="module">
-    import { initializeApp }      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs,
-      addDoc, updateDoc, deleteDoc, doc
-    }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+/* —————————————————————— */
+/* 5) NAVIGAZIONE MESE     */
+/* —————————————————————— */
+.calendar-header {
+  display: flex; justify-content: center; align-items: center;
+  margin: 1rem 0;
+}
+.calendar-header h2 {
+  margin: 0 .5rem; text-transform: capitalize;
+}
+.btn-nav {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .4rem .6rem; border-radius: 6px;
+  background: var(--accent); border: none; cursor: pointer;
+}
+.btn-nav svg {
+  width: 1rem; height: 1rem;
+  stroke: #006064; stroke-width: 2; fill: none;
+}
 
-    // 1) Config Firebase
-    initializeApp({
-      apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
-      authDomain:        "prenotazioni-app-87467.firebaseapp.com",
-      projectId:         "prenotazioni-app-87467",
-      storageBucket:     "prenotazioni-app-87467.appspot.com",
-      messagingSenderId: "322391103742",
-      appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
-    });
-    const db = getFirestore();
+/* —————————————————————— */
+/* 6) MODALI GENERALI      */
+/* —————————————————————— */
+.modal {
+  display: none; position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.4);
+  justify-content: center; align-items: center;
+  z-index: 10;
+}
+.modal.active { display: flex; }
+.modal-content {
+  position: relative; background: var(--card);
+  border: 2px solid var(--accent); border-radius: 8px;
+  padding: 1.5rem; width: 90%; max-width: 500px;
+  max-height: none; overflow-y: visible;
+}
+.close-btn {
+  position: absolute; top: .5rem; right: .5rem;
+  background: none; border: none;
+  font-size: 1.2rem; color: var(--text);
+  cursor: pointer;
+}
 
-    // 2) Festività italiane
-    function calculateEaster(Y){ /* stessa implementazione di prima */ }
-    function getHolidays(Y){ /* stessa implementazione di prima */ }
+/* —————————————————————— */
+/* 7) DATEPICKER           */
+/* —————————————————————— */
+.datepicker-group {
+  display: flex; gap: 1rem; margin-bottom: 1rem;
+}
+.datepicker-field {
+  flex: 1; display: flex; flex-direction: column;
+  font-weight: bold; color: var(--text);
+}
+.datepicker-field input[type="date"] {
+  margin-top: .5rem; padding: .5rem;
+  border: var(--input-border); border-radius: 8px;
+}
 
-    // 3) Login/Logout
-    if(!sessionStorage.getItem('user')) location.href='index.html';
-    document.getElementById('logout-btn').onclick=()=>{
-      sessionStorage.removeItem('user');
-      location.href='index.html';
-    };
+/* —————————————————————— */
+/* 8) LISTA GIORNI         */
+/* —————————————————————— */
+#weekday-list { margin-bottom: 1rem; }
+.weekday-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: .4rem 0; border-top: 1px solid var(--accent);
+}
+.weekday-row:first-child { border-top: none; }
+.weekday-row input[type="checkbox"] { margin-right: .5rem; }
+.weekday-row span { flex: 1; text-align: center; }
 
-    let currentMonthDate = new Date();
-    window.addEventListener('DOMContentLoaded', ()=>{
-      renderCalendar(currentMonthDate);
-      attachWizardLogic();
-    });
+/* —————————————————————— */
+/* 9) PILLOLE ORARI        */
+/* —————————————————————— */
+.selected-times {
+  display: inline-flex; flex-wrap: wrap; gap: .25rem;
+  margin-left: .5rem;
+}
+.selected-times span {
+  background: white; border: var(--input-border);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: .8rem; display: inline-flex; align-items: center;
+}
+.selected-times .remove-time {
+  margin-left: 4px; background: none; border: none;
+  color: var(--accent); font-weight: bold; cursor: pointer;
+}
 
-    // 4) renderCalendar
-    async function renderCalendar(dateObj){
-      currentMonthDate = dateObj;
-      const Y=dateObj.getFullYear(),
-            M=dateObj.getMonth(),
-            dim=new Date(Y,M+1,0).getDate(),
-            first=(new Date(Y,M,1).getDay()+6)%7,
-            rows=Math.ceil((first+dim)/7),
-            hols=getHolidays(Y),
-            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+/* —————————————————————— */
+/*10) TASTI ORA            */
+/* —————————————————————— */
+.clock-btn {
+  background: var(--accent);
+  border: none; border-radius: 4px;
+  padding: .3rem; cursor: pointer;
+}
 
-      const c=document.getElementById('calendar-container');
-      c.innerHTML='';
+/* —————————————————————— */
+/*11) SPINNER / LOADER     */
+/* —————————————————————— */
+#loader {
+  display: none; position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.3);
+  justify-content: center; align-items: center;
+  z-index: 20;
+}
+#loader.active { display: flex; }
+.spinner {
+  width: 50px; height: 50px;
+  border: 6px solid var(--card);
+  border-top: 6px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
-      // Header mese
-      const nav=document.createElement('div'); nav.className='calendar-header';
-      let mName=dateObj.toLocaleString('it-IT',{month:'long'});
-      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
-      const btnP=document.createElement('button'); btnP.className='btn-nav';
-      btnP.innerHTML=`<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
-      btnP.onclick=()=>renderCalendar(new Date(Y,M-1,1));
-      const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
-      const btnN=document.createElement('button'); btnN.className='btn-nav';
-      btnN.innerHTML=`<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
-      btnN.onclick=()=>renderCalendar(new Date(Y,M+1,1));
-      nav.append(btnP,title,btnN);
-      c.append(nav);
-
-      // Tabella
-      const tbl=document.createElement('table'),
-            thead=tbl.createTHead(), hr=thead.insertRow();
-      wds.forEach(d=>{const th=document.createElement('th');th.textContent=d;hr.append(th);});
-      const tbody=tbl.createTBody();
-      let day=1;
-      for(let r=0;r<rows;r++){
-        const tr=tbody.insertRow();
-        for(let cc=0;cc<7;cc++){
-          const td=tr.insertCell(), idx=r*7+cc;
-          if(idx<first||day>dim){
-            td.innerHTML='';
-          } else {
-            const iso=`${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className='calendar-cell'; td.dataset.date=iso;
-            if(cc===6||hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML=`<div>${day}</div><div class="slots-container"></div>`;
-            day++;
-          }
-        }
-      }
-      c.append(tbl);
-
-      // load slots
-      const snap=await getDocs(collection(db,'slots'));
-      snap.forEach(ds=>{
-        const s=ds.data(),
-              cell=document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
-        if(!cell) return;
-        const el=document.createElement('div');
-        el.className='slot '+(s.libero?'free':'');
-        el.innerHTML=`
-          <span>${s.time}</span>
-          <input type="checkbox" ${s.visibile?'checked':''}
-                 onchange="updateSlotVisibility(this,'${ds.id}')">
-          <button class="btn-icon" onclick="deleteSlot('${ds.id}',this)">×</button>
-        `;
-        cell.append(el);
-      });
-    }
-    window.updateSlotVisibility=async(cb,id)=>{ await updateDoc(doc(db,'slots',id),{visibile:cb.checked}); };
-    window.deleteSlot=async(id,btn)=>{ await deleteDoc(doc(db,'slots',id)); btn.closest('.slot').remove(); };
-
-    // 5) Wizard & Timepicker
-    function attachWizardLogic(){
-      const loader=document.getElementById('loader'),
-            wz=document.getElementById('wizard-btn'),
-            wm=document.getElementById('wizard-modal'),
-            tp=document.getElementById('timepicker-modal'),
-            sd=document.getElementById('start-date'),
-            ed=document.getElementById('end-date'),
-            wl=document.getElementById('weekday-list'),
-            hl=document.getElementById('hour-list'),
-            ws=document.getElementById('wizard-save'),
-            ts=document.getElementById('timepicker-save'),
-            sa=document.getElementById('select-all'),
-            closes=document.querySelectorAll('.close-btn');
-      let ctx=null;
-
-      wz.onclick=()=>{
-        // Reset datepickers & weekday list
-        sd.value=''; ed.value='';
-        wl.innerHTML='';
-        ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-          .forEach(d=>{
-            const row=document.createElement('div'); row.className='weekday-row';
-            const cb=document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
-            const lbl=document.createElement('span'); lbl.textContent=d;
-            const sel=document.createElement('div'); sel.className='selected-times';
-            const btn=document.createElement('button'); btn.className='clock-btn'; btn.textContent='🕒';
-            btn.onclick=()=>{
-              ctx={cb,sel};
-              buildHours();
-              sa.checked=false;
-              tp.classList.add('active');
-            };
-            row.append(cb,lbl,sel,btn);
-            wl.append(row);
-          });
-        wm.classList.add('active');
-      };
-      closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
-
-      function buildHours(){
-        hl.innerHTML='';
-        for(let h=7;h<=20;h++){
-          const hr=String(h).padStart(2,'0'),
-                div=document.createElement('div'),
-                c=document.createElement('input'),
-                sh=document.createElement('select'),
-                sm=document.createElement('select');
-          div.className='hour-row'; c.type='checkbox';
-          for(let hh=7;hh<=20;hh++){
-            const o=document.createElement('option');
-            o.value=o.textContent=String(hh).padStart(2,'0');
-            sh.append(o);
-          }
-          sh.value=hr;
-          ['00','15','30','45'].forEach(mm=>{
-            const o=document.createElement('option');
-            o.value=o.textContent=mm;
-            sm.append(o);
-          });
-          sm.value='00';
-          c.checked=false;
-          div.append(c,sh,document.createTextNode(':'),sm);
-          hl.append(div);
-        }
-      }
-
-      sa.onclick=()=>{
-        const checked=sa.checked;
-        hl.querySelectorAll('input[type="checkbox"]').forEach(ch=>ch.checked=checked);
-      };
-
-      ts.onclick=()=>{
-        const times=[];
-        hl.querySelectorAll('.hour-row').forEach(r=>{
-          const c=r.querySelector('input[type="checkbox"]'),
-                [sh,sm]=r.querySelectorAll('select');
-          if(c.checked) times.push(`${sh.value}:${sm.value}`);
-        });
-        ctx.sel.innerHTML=times.map(t=>
-          `<span>${t}<button class="remove-time">×</button></span>`
-        ).join('');
-        ctx.sel.querySelectorAll('.remove-time').forEach(b=>b.onclick=ev=>ev.target.closest('span').remove());
-        ctx.cb.checked = ctx.sel.childElementCount>0;
-        tp.classList.remove('active');
-      };
-
-      ws.onclick=async()=>{
-        const start=sd.valueAsDate, end=ed.valueAsDate;
-        if(!start||!end||start>end){ alert('Intervallo non valido'); return; }
-        loader.classList.add('active');
-        const ops=[];
-        wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const c=row.querySelector('input[type=checkbox]');
-          if(!c.checked) return;
-          const wd=c.dataset.day;
-          for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-            const iso=d.toISOString().slice(0,10),
-                  name=d.toLocaleDateString('it-IT',{weekday:'long'});
-            if(name===wd){
-              row.querySelectorAll('.selected-times span').forEach(sp=>{
-                const t=sp.textContent.replace('×','').trim();
-                ops.push(addDoc(collection(db,'slots'),{
-                  date:     iso,
-                  time:     t,
-                  nome:     '',
-                  telefono: '',
-                  libero:   true,
-                  visibile: true,
-                  dove:     ''
-                }));
-              });
-            }
-          }
-        });
-        await Promise.all(ops);
-        loader.classList.remove('active');
-        wm.classList.remove('active');
-        renderCalendar(currentMonthDate);
-      };
-    }
-  </script>
-</body>
-</html>
+/* —————————————————————— */
+/*12) TIMEPICKER SELECTS    */
+/* —————————————————————— */
+#hour-list select {
+  background: white;
+  border: var(--input-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0 2px;
+  font-size: .9rem;
+}
+.hour-row {
+  display: flex; align-items: center;
+  gap: .5rem; margin-bottom: .4rem;
+}
+.hour-row input[type="checkbox"] { margin: 0; }
+#select-all { transform: scale(1.2); margin-bottom: .5rem; }
