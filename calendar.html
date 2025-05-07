@@ -15,11 +15,18 @@
   <!-- Topbar -->
   <header class="topbar">
     <button id="logout-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M16 17l5-5-5-5M21 12H9"/><rect x="3" y="4" width="12" height="16" rx="2" ry="2"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M16 17l5-5-5-5M21 12H9"/>
+        <rect x="3" y="4" width="12" height="16" rx="2" ry="2"/>
+      </svg>
       Logout
     </button>
     <button id="wizard-btn" class="btn">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 
+                 12 18.56 5.82 22 7 14.14l-5-4.87 
+                 6.91-1.01L12 2z"/>
+      </svg>
       Wizard
     </button>
   </header>
@@ -53,9 +60,7 @@
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
-      <label>
-        <input type="checkbox" id="select-all"> Seleziona tutto
-      </label>
+      <label><input type="checkbox" id="select-all"> Seleziona tutto</label>
       <div id="hour-list"></div>
       <button id="timepicker-save" class="btn">Conferma orari</button>
     </div>
@@ -68,8 +73,8 @@
       addDoc, updateDoc, deleteDoc, doc
     }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // --- 1) Inizializza Firebase ---
-    const app = initializeApp({
+    // --- Firebase init ---
+    initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
       projectId:         "prenotazioni-app-87467",
@@ -77,137 +82,110 @@
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
     });
-    const db = getFirestore(app);
+    const db = getFirestore();
 
-    // --- 2) Calcola la data di Pasqua per l'anno Y ---
+    // --- Calcolo Pasqua ---
     function calculateEaster(Y) {
-      const a = Y % 19,
-            b = Math.floor(Y / 100),
-            c = Y % 100,
-            d = Math.floor(b / 4),
-            e = b % 4,
-            f = Math.floor((b + 8) / 25),
-            g = Math.floor((b - f + 1) / 3),
-            h = (19 * a + b - d - g + 15) % 30,
-            i = Math.floor(c / 4),
-            k = c % 4,
-            L = (32 + 2 * e + 2 * i - h - k) % 7,
-            m = Math.floor((a + 11 * h + 22 * L) / 451),
-            month = Math.floor((h + L - 7 * m + 114) / 31),
-            day = ((h + L - 7 * m + 114) % 31) + 1;
-      return new Date(Y, month - 1, day);
+      const a=Y%19,b=Math.floor(Y/100),c=Y%100,
+            d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+            g=Math.floor((b-f+1)/3),
+            h=(19*a+b-d-g+15)%30,
+            i=Math.floor(c/4),k=c%4,
+            L=(32+2*e+2*i-h-k)%7,
+            m=Math.floor((a+11*h+22*L)/451),
+            month=Math.floor((h+L-7*m+114)/31),
+            day=((h+L-7*m+114)%31)+1;
+      return new Date(Y,month-1,day);
     }
-
-    // --- 3) Ritorna un array di ISO-strings delle festività italiane in Y ---
+    // --- Festività italiane ---
     function getHolidays(Y) {
-      const pad = n => String(n).padStart(2, '0');
-      const eas = calculateEaster(Y);
-      const em = eas.getMonth() + 1, ed = eas.getDate();
-      const pas = `${Y}-${pad(em)}-${pad(ed)}`;
-      // lunedì dell'Angelo
-      const pmo = new Date(eas);
-      pmo.setDate(ed + 1);
-      const pm = pmo.getMonth() + 1, pd = pmo.getDate();
-      const pasq = `${Y}-${pad(pm)}-${pad(pd)}`;
-
+      const pad=n=>String(n).padStart(2,'0');
+      const eas=calculateEaster(Y),
+            em=eas.getMonth()+1, ed=eas.getDate(),
+            pas=`${Y}-${pad(em)}-${pad(ed)}`;
+      const pmo=new Date(eas); pmo.setDate(ed+1);
+      const pm=pmo.getMonth()+1, pd=pmo.getDate(),
+            pasq=`${Y}-${pad(pm)}-${pad(pd)}`;
       return [
-        `${Y}-01-01`, `${Y}-01-06`,     // Capodanno, Epifania
-        pas, pasq,                      // Pasqua, Lunedì dell'Angelo
-        `${Y}-04-25`, `${Y}-05-01`, `${Y}-06-02`, // Festa della Liberazione, Festa del Lavoro, Festa della Repubblica
-        `${Y}-06-29`,                   // S. Pietro e Paolo
-        `${Y}-08-15`, `${Y}-11-01`,     // Ferragosto, Ognissanti
-        `${Y}-12-08`, `${Y}-12-25`, `${Y}-12-26`  // Immacolata, Natale, S. Stefano
+        `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
+        `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,
+        `${Y}-06-29`,`${Y}-08-15`,`${Y}-11-01`,
+        `${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`
       ];
     }
 
-    // --- 4) Login / Logout guard ---
-    if (!sessionStorage.getItem('user')) {
-      location.href = 'index.html';
-    }
+    // --- Login guard + logout ---
+    if (!sessionStorage.getItem('user')) location.href='index.html';
     document.getElementById('logout-btn').onclick = () => {
       sessionStorage.removeItem('user');
-      location.href = 'index.html';
+      location.href='index.html';
     };
 
-    // --- 5) Stato corrente del mese ---
+    // --- Stato mese ---
     let currentMonthDate = new Date();
-
     window.addEventListener('DOMContentLoaded', () => {
       renderCalendar(currentMonthDate);
       attachWizardLogic();
     });
 
-    // --- 6) Renderizza il calendario del mese dato ---
+    // --- renderCalendar ---
     async function renderCalendar(d0) {
       currentMonthDate = d0;
       const Y     = d0.getFullYear(),
             M     = d0.getMonth(),
-            dim   = new Date(Y, M + 1, 0).getDate(),
-            first = (new Date(Y, M, 1).getDay() + 6) % 7,
-            rows  = Math.ceil((first + dim) / 7),
+            dim   = new Date(Y,M+1,0).getDate(),
+            first = (new Date(Y,M,1).getDay()+6)%7,
+            rows  = Math.ceil((first+dim)/7),
             hols  = getHolidays(Y),
             wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       const container = document.getElementById('calendar-container');
       container.innerHTML = '';
 
-      // Header mese con frecce
-      const nav = document.createElement('div'); nav.className = 'calendar-header';
-      let mName = d0.toLocaleString('it-IT', { month: 'long' });
-      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
-      const btnP = document.createElement('button'); btnP.className = 'btn-nav';
-      btnP.textContent = '‹';
-      btnP.onclick = () => renderCalendar(new Date(Y, M - 1, 1));
-      const title = document.createElement('h2'); title.textContent = `${mName} ${Y}`;
-      const btnN = document.createElement('button'); btnN.className = 'btn-nav';
-      btnN.textContent = '›';
-      btnN.onclick = () => renderCalendar(new Date(Y, M + 1, 1));
-      nav.append(btnP, title, btnN);
+      // Header
+      const nav = document.createElement('div'); nav.className='calendar-header';
+      let mName = d0.toLocaleString('it-IT',{month:'long'});
+      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
+      const btnP = document.createElement('button'); btnP.className='btn-nav';
+      btnP.textContent='‹'; btnP.onclick=()=>renderCalendar(new Date(Y,M-1,1));
+      const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
+      const btnN = document.createElement('button'); btnN.className='btn-nav';
+      btnN.textContent='›'; btnN.onclick=()=>renderCalendar(new Date(Y,M+1,1));
+      nav.append(btnP,title,btnN);
       container.append(nav);
 
-      // Costruzione tabella
-      const tbl = document.createElement('table'),
-            thead = tbl.createTHead(),
-            hr = thead.insertRow();
-      wds.forEach(d => {
-        const th = document.createElement('th');
-        th.textContent = d;
-        hr.append(th);
-      });
-      const tbody = tbl.createTBody();
-      let day = 1;
-      for (let r = 0; r < rows; r++) {
-        const tr = tbody.insertRow();
-        for (let i = 0; i < 7; i++) {
-          const td = tr.insertCell(), idx = r * 7 + i;
-          if (idx < first || day > dim) {
-            td.innerHTML = '';
+      // Table
+      const tbl=document.createElement('table'),
+            thead=tbl.createTHead(), hr=thead.insertRow();
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; hr.append(th); });
+      const tbody=tbl.createTBody();
+      let day=1;
+      for(let r=0;r<rows;r++){
+        const tr=tbody.insertRow();
+        for(let i=0;i<7;i++){
+          const td=tr.insertCell(), idx=r*7+i;
+          if(idx<first||day>dim){
+            td.innerHTML='';
           } else {
-            const iso = `${Y}-${String(M + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className = 'calendar-cell';
-            td.dataset.date = iso;
-            if (i === 6 || hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML = `
-              <div>${day}</div>
-              <div class="slots-container"></div>
-            `;
+            const iso=`${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            td.className='calendar-cell'; td.dataset.date=iso;
+            if(i===6||hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML=`<div>${day}</div><div class="slots-container"></div>`;
             day++;
           }
         }
       }
       container.append(tbl);
 
-      // Caricamento slot da Firestore
+      // Load slots
       const snap = await getDocs(collection(db,'slots'));
-      snap.forEach(ds => {
-        const s = ds.data(),
-              cell = document.querySelector(
-                `.calendar-cell[data-date="${s.date}"] .slots-container`
-              );
-        if (!cell) return;
-        const el = document.createElement('div');
-        el.className = 'slot ' + (s.libero ? 'free' : '');
-        el.innerHTML = `
+      snap.forEach(ds=>{
+        const s=ds.data(),
+              cell=document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
+        if(!cell) return;
+        const el=document.createElement('div');
+        el.className='slot '+(s.libero?'free':'');
+        el.innerHTML=`
           <span>${s.time}</span>
           <input type="checkbox" ${s.visibile?'checked':''}
                  onchange="updateSlotVisibility(this,'${ds.id}')">
@@ -216,61 +194,63 @@
         cell.append(el);
       });
     }
-
-    // --- 7) Helpers per slot dinamici ---
-    window.updateSlotVisibility = async (cb,id) => {
-      await updateDoc(doc(db,'slots',id), { visibile: cb.checked });
+    window.updateSlotVisibility=async(cb,id)=> {
+      await updateDoc(doc(db,'slots',id),{visibile:cb.checked});
     };
-    window.deleteSlot = async (id,btn) => {
+    window.deleteSlot=async(id,btn)=>{
       await deleteDoc(doc(db,'slots',id));
       btn.closest('.slot').remove();
     };
 
-    // --- 8) Wizard & Timepicker (logica invariata) ---
+    // --- Wizard & Timepicker ---
     function attachWizardLogic(){
-      const loader = document.getElementById('loader'),
-            wz     = document.getElementById('wizard-btn'),
-            wm     = document.getElementById('wizard-modal'),
-            tp     = document.getElementById('timepicker-modal'),
-            sd     = document.getElementById('start-date'),
-            ed     = document.getElementById('end-date'),
-            wl     = document.getElementById('weekday-list'),
-            hl     = document.getElementById('hour-list'),
-            ws     = document.getElementById('wizard-save'),
-            ts     = document.getElementById('timepicker-save'),
-            sa     = document.getElementById('select-all'),
-            closes = document.querySelectorAll('.close-btn');
-      let ctx = null;
+      const loader=document.getElementById('loader'),
+            wz=document.getElementById('wizard-btn'),
+            wm=document.getElementById('wizard-modal'),
+            tp=document.getElementById('timepicker-modal'),
+            sd=document.getElementById('start-date'),
+            ed=document.getElementById('end-date'),
+            wl=document.getElementById('weekday-list'),
+            hl=document.getElementById('hour-list'),
+            ws=document.getElementById('wizard-save'),
+            ts=document.getElementById('timepicker-save'),
+            sa=document.getElementById('select-all'),
+            closes=document.querySelectorAll('.close-btn');
+      let ctx=null;
 
-      wz.onclick = () => {
-        sd.value = '';
-        ed.value = '';
-        wl.innerHTML = '';
+      wz.onclick=()=>{
+        sd.value=''; ed.value='';
+        wl.innerHTML='';
         ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-          .forEach(d => {
-            const row = document.createElement('div'); row.className = 'weekday-row';
-            const cb  = document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
-            const lbl = document.createElement('span'); lbl.textContent=d;
-            const sel = document.createElement('div'); sel.className='selected-times';
-            const btn = document.createElement('button'); btn.className='clock-btn'; btn.textContent='🕒';
-            btn.onclick = () => { ctx={cb,sel}; buildHours(); sa.checked=false; tp.classList.add('active'); };
+          .forEach(d=>{
+            const row=document.createElement('div'); row.className='weekday-row';
+            const cb=document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
+            const lbl=document.createElement('span'); lbl.textContent=d;
+            const sel=document.createElement('div'); sel.className='selected-times';
+            const btn=document.createElement('button'); btn.className='clock-btn'; btn.textContent='🕒';
+            btn.onclick=()=>{
+              ctx={cb,sel};
+              buildHours();
+              sa.checked=false;
+              tp.classList.add('active');
+            };
             row.append(cb,lbl,sel,btn);
             wl.append(row);
           });
         wm.classList.add('active');
       };
-      closes.forEach(b => b.onclick = () => b.closest('.modal').classList.remove('active'));
+      closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
       function buildHours(){
-        hl.innerHTML = '';
-        for (let h=7; h<=20; h++){
-          const hr = String(h).padStart(2,'0'),
-                div = document.createElement('div'),
-                c   = document.createElement('input'),
-                sh  = document.createElement('select'),
-                sm  = document.createElement('select');
+        hl.innerHTML='';
+        for(let h=7;h<=20;h++){
+          const hr=String(h).padStart(2,'0'),
+                div=document.createElement('div'),
+                c=document.createElement('input'),
+                sh=document.createElement('select'),
+                sm=document.createElement('select');
           div.className='hour-row'; c.type='checkbox';
-          for (let hh=7; hh<=20; hh++){
+          for(let hh=7;hh<=20;hh++){
             const o=document.createElement('option');
             o.value=o.textContent=String(hh).padStart(2,'0');
             sh.append(o);
@@ -287,45 +267,47 @@
         }
       }
 
-      sa.onclick = () => {
-        const sel = sa.checked;
-        hl.querySelectorAll('input[type="checkbox"]').forEach(ch => ch.checked = sel);
+      sa.onclick=()=> {
+        hl.querySelectorAll('input[type="checkbox"]').forEach(ch=>ch.checked=sa.checked);
       };
 
-      ts.onclick = () => {
-        const times = [];
+      ts.onclick=()=>{
+        const times=[];
         hl.querySelectorAll('.hour-row').forEach(r=>{
           const c=r.querySelector('input[type="checkbox"]'),
                 [sh,sm]=r.querySelectorAll('select');
-          if (c.checked) times.push(`${sh.value}:${sm.value}`);
+          if(c.checked) times.push(`${sh.value}:${sm.value}`);
         });
-        ctx.sel.innerHTML = times.map(t =>
-          `<span>${t}<button class="remove-time">×</button></span>`
-        ).join('');
+        ctx.sel.innerHTML=times.map(t=>`
+          <span>${t}<button class="remove-time">×</button></span>
+        `).join('');
         ctx.sel.querySelectorAll('.remove-time').forEach(b=>b.onclick=ev=>ev.target.closest('span').remove());
         ctx.cb.checked = ctx.sel.childElementCount>0;
         tp.classList.remove('active');
       };
 
-      ws.onclick = async () => {
+      ws.onclick=async()=>{
         loader.classList.add('active');
-        const ops = [];
+        const start=sd.valueAsDate, end=ed.valueAsDate;
+        const ops=[];
         wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const dateCheckbox = row.querySelector('input[type="checkbox"]');
-          const dayName = row.querySelector('span').textContent;
-          const slots = row.querySelectorAll('.selected-times span');
-          slots.forEach(sp=>{
-            const t = sp.textContent.replace('×','').trim();
-            // per ogni giorno del range (se vuoi) oppure solo per la cella attuale
-            ops.push(addDoc(collection(db,'slots'),{
-              date: row.parentElement.previousSibling.querySelector('div').textContent, // oppure l'iso corretto
-              time: t,
-              nome: '',
-              telefono: '',
-              libero: true,
-              visibile: true,
-              dove: ''
-            }));
+          const dayName=row.querySelector('input').dataset.day;
+          row.querySelectorAll('.selected-times span').forEach(sp=>{
+            const t=sp.textContent.replace('×','').trim();
+            for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+              if(d.toLocaleDateString('it-IT',{weekday:'long'})===dayName){
+                const iso=d.toISOString().slice(0,10);
+                ops.push(addDoc(collection(db,'slots'),{
+                  date:     iso,
+                  time:     t,
+                  nome:     '',
+                  telefono: '',
+                  libero:   true,
+                  visibile: true,
+                  dove:     ''
+                }));
+              }
+            }
           });
         });
         await Promise.all(ops);
