@@ -22,6 +22,11 @@
       <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
       Wizard
     </button>
+
+
+    <button id="debug-save" class="btn">Prova Salvataggio</button>
+
+    
   </header>
 
   <!-- Calendario -->
@@ -228,6 +233,28 @@
       };
       closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
+
+
+
+      // Pulsante di debug per testare Firestore
+document.getElementById('debug-save').onclick = async () => {
+  try {
+    const ref = await addDoc(collection(db, 'debug'), {
+      message: 'test salva',
+      timestamp: new Date().toISOString()
+    });
+    console.log('Debug doc saved with ID:', ref.id);
+    alert('Documento di debug salvato con ID: ' + ref.id);
+  } catch (err) {
+    console.error('Errore saving debug doc:', err);
+    alert('Errore durante il salvataggio di debug: ' + err.message);
+  }
+};
+
+
+
+
+      
       function buildHours(){
         hl.innerHTML='';
         for(let h=7;h<=20;h++){
@@ -302,6 +329,7 @@
         renderCalendar(currentMonthDate);
       };
     }
+    
   </script>
 </body>
 </html>
