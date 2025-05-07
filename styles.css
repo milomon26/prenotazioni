@@ -1,3 +1,6 @@
+/* Import font “Nunito” per look più “cute” */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
+
 :root {
   --bg: #e0f7fa;
   --card: #b2ebf2;
@@ -5,21 +8,33 @@
   --text: #006064;
   --input-border: 2px solid var(--accent);
   --green: #a5d6a7;
-  --green-light: #d0f8ce;   /* verde “evidenziatore” più chiaro */
+  --green-light: #d0f8ce;    /* verde evidenziatore più chiaro */
+  --link-color: #00796b;      /* colore “cute” per i link */
 }
 
-/* Reset globale */
+/* RESET GLOBALE */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* BODY */
 body {
-  font-family: sans-serif;
+  font-family: 'Nunito', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+}
+
+/* LINK */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+a:hover {
+  text-decoration: underline;
 }
 
 /* —————————————————————— */
@@ -112,7 +127,7 @@ thead th {
 }
 .calendar-cell {
   position: relative;
-  min-height: 180px; /* fissa la cella per contenere 4 slot + link */
+  min-height: 180px;  /* fissa la cella per contenere 4 slot + link */
 }
 .calendar-cell div:first-child {
   font-weight: bold;
@@ -120,10 +135,20 @@ thead th {
 .calendar-cell.holiday > div:first-child {
   color: red;
 }
+/* contenitore slot con overflow nascosto */
 .slots-container {
   margin-top: 4px;
-  height: 140px;      /* esatto spazio per 4 slot + link */
-  overflow: hidden;   /* niente scrollbar nelle celle */
+  height: 140px;   /* spazio per 4 slot */
+  overflow: hidden;
+  position: relative;
+}
+/* link “Vedi altri” sempre in fondo */
+.more-container {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 100%;
+  text-align: center;
 }
 .slot {
   display: flex;
@@ -206,7 +231,7 @@ thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  max-height: 90vh;    /* permette lo scroll se troppo alta */
+  max-height: 90vh;     /* rende il modal scrollabile se troppo alto */
   overflow-y: auto;
 }
 .close-btn {
