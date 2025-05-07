@@ -84,8 +84,8 @@
       messagingSenderId: "322391103742",
       appId:             "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+    initializeApp(firebaseConfig);
+    const db = getFirestore();
 
     // 2) Festività italiane
     function calculateEaster(Y) {
@@ -100,18 +100,16 @@
             day = ((h+L-7*m+114)%31)+1;
       return new Date(Y, month-1, day);
     }
-
     function getHolidays(Y) {
       const pad = n => String(n).padStart(2,'0');
       const eas = calculateEaster(Y),
-            em  = eas.getMonth() + 1,
+            em  = eas.getMonth()+1,
             ed  = eas.getDate(),
             pas = `${Y}-${pad(em)}-${pad(ed)}`;
-      const pmo = new Date(eas);
-      pmo.setDate(ed + 1);
-      const pm  = pmo.getMonth() + 1,
+      const pmo = new Date(eas); pmo.setDate(ed+1);
+      const pm  = pmo.getMonth()+1,
             pd  = pmo.getDate(),
-            pasq = `${Y}-${pad(pm)}-${pad(pd)}`;
+            pasq= `${Y}-${pad(pm)}-${pad(pd)}`;
       return [
         `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
         `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,
@@ -120,20 +118,18 @@
       ];
     }
 
-    // 3) Login / Logout
-    if (!sessionStorage.getItem('user')) {
-      location.href = 'index.html';
-    }
-    document.getElementById('logout-btn').onclick = () => {
+    // 3) Login/Logout
+    if (!sessionStorage.getItem('user')) location.href='index.html';
+    document.getElementById('logout-btn').onclick = ()=>{
       sessionStorage.removeItem('user');
-      location.href = 'index.html';
+      location.href='index.html';
     };
 
-    // 4) Stato mese corrente
+    // 4) Stato mese
     let currentMonthDate = new Date();
 
-    // 5) On load
-    window.addEventListener('DOMContentLoaded', () => {
+    // 5) Avvio
+    window.addEventListener('DOMContentLoaded', ()=>{
       renderCalendar(currentMonthDate);
       attachWizardLogic();
     });
@@ -153,42 +149,36 @@
       container.innerHTML = '';
 
       // Header mese
-      const nav = document.createElement('div'); nav.className = 'calendar-header';
+      const nav = document.createElement('div'); nav.className='calendar-header';
       let mName = dateObj.toLocaleString('it-IT',{month:'long'});
-      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
+      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
       const btnP = document.createElement('button'); btnP.className='btn-nav';
-      btnP.innerHTML = `<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
-      btnP.onclick = () => renderCalendar(new Date(Y,M-1,1));
-      const title = document.createElement('h2'); title.textContent = `${mName} ${Y}`;
-      const btnN = document.createElement('button'); btnN.className='btn-nav';
-      btnN.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
-      btnN.onclick = () => renderCalendar(new Date(Y,M+1,1));
-      nav.append(btnP, title, btnN);
+      btnP.innerHTML=`<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>`;
+      btnP.onclick=()=>renderCalendar(new Date(Y,M-1,1));
+      const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
+      const btnN=document.createElement('button'); btnN.className='btn-nav';
+      btnN.innerHTML=`<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
+      btnN.onclick=()=>renderCalendar(new Date(Y,M+1,1));
+      nav.append(btnP,title,btnN);
       container.append(nav);
 
-      // Tabella
-      const tbl   = document.createElement('table'),
-            thead = tbl.createTHead(),
-            hr    = thead.insertRow();
-      wds.forEach(d => {
-        const th = document.createElement('th');
-        th.textContent = d;
-        hr.append(th);
-      });
-      const tbody = tbl.createTBody();
-      let day = 1;
-      for (let r=0; r<rows; r++){
-        const tr = tbody.insertRow();
-        for (let c=0; c<7; c++){
-          const td = tr.insertCell(), idx = r*7 + c;
-          if (idx < first || day > dim) {
-            td.innerHTML = '';
+      // Tabella giorni
+      const tbl=document.createElement('table'),
+            thead=tbl.createTHead(), hr=thead.insertRow();
+      wds.forEach(d=>{const th=document.createElement('th'); th.textContent=d; hr.append(th);});
+      const tbody=tbl.createTBody();
+      let day=1;
+      for(let r=0;r<rows;r++){
+        const tr=tbody.insertRow();
+        for(let c=0;c<7;c++){
+          const td=tr.insertCell(), idx=r*7+c;
+          if(idx<first||day>dim){
+            td.innerHTML='';
           } else {
-            const iso = `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className = 'calendar-cell';
-            td.dataset.date = iso;
-            if (c===6 || hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML = `<div>${day}</div><div class="slots-container"></div>`;
+            const iso=`${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            td.className='calendar-cell'; td.dataset.date=iso;
+            if(c===6||hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML=`<div>${day}</div><div class="slots-container"></div>`;
             day++;
           }
         }
@@ -196,16 +186,14 @@
       container.append(tbl);
 
       // Carica slot
-      const snap = await getDocs(collection(db,'slots'));
-      snap.forEach(ds => {
-        const s = ds.data(),
-              cell = document.querySelector(
-                `.calendar-cell[data-date="${s.date}"] .slots-container`
-              );
-        if (!cell) return;
-        const el = document.createElement('div');
-        el.className = 'slot '+(s.libero?'free':'');
-        el.innerHTML = `
+      const snap=await getDocs(collection(db,'slots'));
+      snap.forEach(ds=>{
+        const s=ds.data(),
+              cell=document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
+        if(!cell) return;
+        const el=document.createElement('div');
+        el.className='slot '+(s.libero?'free':'');
+        el.innerHTML=`
           <span>${s.time}</span>
           <input type="checkbox" ${s.visibile?'checked':''}
                  onchange="updateSlotVisibility(this,'${ds.id}')">
@@ -215,40 +203,40 @@
       });
     }
 
-    window.updateSlotVisibility = async(cb,id) => {
+    window.updateSlotVisibility=async(cb,id)=>{
       await updateDoc(doc(db,'slots',id),{visibile:cb.checked});
     };
-    window.deleteSlot = async(id,btn) => {
+    window.deleteSlot=async(id,btn)=>{
       await deleteDoc(doc(db,'slots',id));
       btn.closest('.slot').remove();
     };
 
     // 7) Wizard & Timepicker
     function attachWizardLogic(){
-      const loader = document.getElementById('loader'),
-            wz     = document.getElementById('wizard-btn'),
-            wm     = document.getElementById('wizard-modal'),
-            tp     = document.getElementById('timepicker-modal'),
-            sd     = document.getElementById('start-date'),
-            ed     = document.getElementById('end-date'),
-            wl     = document.getElementById('weekday-list'),
-            hl     = document.getElementById('hour-list'),
-            ws     = document.getElementById('wizard-save'),
-            ts     = document.getElementById('timepicker-save'),
-            closes = document.querySelectorAll('.close-btn');
-      let ctx = null;
+      const loader=document.getElementById('loader'),
+            wz    =document.getElementById('wizard-btn'),
+            wm    =document.getElementById('wizard-modal'),
+            tp    =document.getElementById('timepicker-modal'),
+            sd    =document.getElementById('start-date'),
+            ed    =document.getElementById('end-date'),
+            wl    =document.getElementById('weekday-list'),
+            hl    =document.getElementById('hour-list'),
+            ws    =document.getElementById('wizard-save'),
+            ts    =document.getElementById('timepicker-save'),
+            closes=document.querySelectorAll('.close-btn');
+      let ctx=null;
 
-      wz.onclick = () => {
-        wl.innerHTML = '';
+      wz.onclick=()=>{
+        wl.innerHTML='';
         ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
-          .forEach(d => {
-            const row = document.createElement('div'); row.className='weekday-row';
-            const cb  = document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
-            const lbl = document.createElement('span'); lbl.textContent=d;
-            const sel = document.createElement('div'); sel.className='selected-times';
-            const btn = document.createElement('button'); btn.className='clock-btn'; btn.textContent='🕒';
-            btn.onclick = ()=>{
-              ctx = {cb,sel};
+          .forEach(d=>{
+            const row=document.createElement('div'); row.className='weekday-row';
+            const cb=document.createElement('input'); cb.type='checkbox'; cb.dataset.day=d;
+            const lbl=document.createElement('span'); lbl.textContent=d;
+            const sel=document.createElement('div'); sel.className='selected-times';
+            const btn=document.createElement('button'); btn.className='clock-btn'; btn.textContent='🕒';
+            btn.onclick=()=>{
+              ctx={cb,sel};
               buildHours();
               tp.classList.add('active');
             };
@@ -260,37 +248,39 @@
       closes.forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
       function buildHours(){
-        hl.innerHTML = '';
-        for (let h=7; h<=20; h++){
-          const hr = String(h).padStart(2,'0'),
+        hl.innerHTML='';
+        for(let h=7;h<=20;h++){
+          const hr=String(h).padStart(2,'0'),
                 div=document.createElement('div'),
-                c  = document.createElement('input'),
-                sh = document.createElement('select'),
-                sm = document.createElement('select');
+                c=document.createElement('input'),
+                sh=document.createElement('select'),
+                sm=document.createElement('select');
           div.className='hour-row'; c.type='checkbox';
-          for (let hh=7; hh<=20; hh++){
-            const o = document.createElement('option');
+          for(let hh=7;hh<=20;hh++){
+            const o=document.createElement('option');
             o.value=o.textContent=String(hh).padStart(2,'0');
             sh.append(o);
           }
+          sh.value = hr;
           ['00','15','30','45'].forEach(mm=>{
             const o=document.createElement('option');
             o.value=o.textContent=mm;
             sm.append(o);
           });
+          sm.value='00';
           div.append(c,sh,document.createTextNode(':'),sm);
           hl.append(div);
         }
       }
 
-      ts.onclick = ()=>{
-        const times = [];
+      ts.onclick=()=>{
+        const times=[];
         hl.querySelectorAll('.hour-row').forEach(r=>{
           const c=r.querySelector('input[type=checkbox]'),
                 [sh,sm]=r.querySelectorAll('select');
-          if (c.checked) times.push(`${sh.value}:${sm.value}`);
+          if(c.checked) times.push(`${sh.value}:${sm.value}`);
         });
-        ctx.sel.innerHTML = times.map(t=>`
+        ctx.sel.innerHTML=times.map(t=>`
           <span>${t}<button class="remove-time">×</button></span>
         `).join('');
         ctx.sel.querySelectorAll('.remove-time').forEach(btn=>{
@@ -299,26 +289,22 @@
         tp.classList.remove('active');
       };
 
-      ws.onclick = async()=>{
-        const start = sd.valueAsDate, end = ed.valueAsDate;
-        if (!start||!end||start>end) {
-          alert('Intervallo non valido');
-          return;
-        }
-
-        // raccolgo payloads
-        const payloads = [];
+      ws.onclick=async()=>{
+        const start=sd.valueAsDate, end=ed.valueAsDate;
+        if(!start||!end||start>end){ alert('Intervallo non valido'); return; }
+        loader.classList.add('active');
+        const ops=[];
         wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const c = row.querySelector('input[type=checkbox]');
-          if (!c.checked) return;
-          const wd = c.dataset.day;
-          for (let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-            const iso  = d.toISOString().slice(0,10),
-                  name = d.toLocaleDateString('it-IT',{weekday:'long'});
-            if (name === wd) {
+          const c=row.querySelector('input[type=checkbox]');
+          if(!c.checked) return;
+          const wd=c.dataset.day;
+          for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+            const iso=d.toISOString().slice(0,10),
+                  name=d.toLocaleDateString('it-IT',{weekday:'long'});
+            if(name===wd){
               row.querySelectorAll('.selected-times span').forEach(sp=>{
-                const t = sp.textContent.replace('×','').trim();
-                payloads.push({
+                const t=sp.textContent.replace('×','').trim();
+                ops.push(addDoc(collection(db,'slots'),{
                   date:     iso,
                   time:     t,
                   nome:     '',
@@ -326,28 +312,14 @@
                   libero:   true,
                   visibile: true,
                   dove:     ''
-                });
+                }));
               });
             }
           }
         });
-
-        console.log('Payloads da salvare:');
-        console.table(payloads);
-
-        loader.classList.add('active');
-        // salvataggio uno-a-uno con log
-        for (const p of payloads) {
-          try {
-            const ref = await addDoc(collection(db,'slots'), p);
-            console.log('Slot creato:', ref.id, p);
-          } catch(err) {
-            console.error('Errore creazione slot:', err, p);
-          }
-        }
+        await Promise.all(ops);
         loader.classList.remove('active');
-
-        document.getElementById('wizard-modal').classList.remove('active');
+        wm.classList.remove('active');
         renderCalendar(currentMonthDate);
       };
     }
