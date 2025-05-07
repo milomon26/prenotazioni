@@ -62,9 +62,6 @@ body {
   display:flex;
   justify-content:flex-end;
 }
-.admin-link {
-  font-size:.9rem;
-}
 
 /* CALENDARIO */
 #calendar-container {
