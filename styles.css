@@ -5,7 +5,7 @@
   --text: #006064;
   --input-border: 2px solid var(--accent);
   --green: #a5d6a7;
-  --green-light: #c8e6c9;
+  --green-light: #d0f8ce;   /* verde “evidenziatore” più chiaro */
 }
 
 /* Reset globale */
@@ -112,7 +112,7 @@ thead th {
 }
 .calendar-cell {
   position: relative;
-  height: 100px;
+  min-height: 180px; /* fissa la cella per contenere 4 slot + link */
 }
 .calendar-cell div:first-child {
   font-weight: bold;
@@ -122,8 +122,8 @@ thead th {
 }
 .slots-container {
   margin-top: 4px;
-  max-height: 60px;
-  overflow-y: auto;
+  height: 140px;      /* esatto spazio per 4 slot + link */
+  overflow: hidden;   /* niente scrollbar nelle celle */
 }
 .slot {
   display: flex;
@@ -206,7 +206,8 @@ thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  overflow-y: visible;
+  max-height: 90vh;    /* permette lo scroll se troppo alta */
+  overflow-y: auto;
 }
 .close-btn {
   position: absolute;
