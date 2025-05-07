@@ -9,10 +9,19 @@
 </head>
 <body>
 
-  <!-- Header utente -->
+  <!-- Header cliente -->
   <header class="header">
     <a href="admin.html" class="btn admin-link">Area Admin</a>
   </header>
+
+  <!-- Popup “Vedi altri” per utente -->
+  <div id="more-modal-user" class="modal">
+    <div class="modal-content">
+      <button class="close-btn">&times;</button>
+      <h3>Altri slot</h3>
+      <div id="more-list-user"></div>
+    </div>
+  </div>
 
   <!-- Booking Modal -->
   <div id="booking-modal" class="modal">
@@ -34,6 +43,7 @@
     <div id="calendar-container"></div>
   </main>
 
+  <!-- Loader -->
   <div id="loader"><div class="spinner"></div></div>
 
   <script type="module">
@@ -44,7 +54,7 @@
       updateDoc, doc
     }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // --- Firebase init ---
+    // --- 1) Inizializza Firebase ---
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -55,7 +65,7 @@
     });
     const db = getFirestore();
 
-    // --- Pasqua & festività italiane ---
+    // --- 2) Calcolo Pasqua & festività italiane ---
     function calculateEaster(Y) {
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
@@ -90,40 +100,36 @@
 
     window.addEventListener('DOMContentLoaded', ()=>renderCalendar(currentDate));
 
-    // --- Render calendario utente ---
+    // --- 3) Render calendario utente con “Vedi altri” ---
     async function renderCalendar(d0){
       currentDate = d0;
       const Y   = d0.getFullYear(),
             M   = d0.getMonth(),
             dim = new Date(Y,M+1,0).getDate(),
-            first = (new Date(Y,M,1).getDay()+6)%7,
-            rows  = Math.ceil((first+dim)/7),
+            first = (new Date(Y,M,1).getDay() + 6) % 7,
+            rows  = Math.ceil((first + dim) / 7),
             hols  = getHolidays(Y),
             wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
-      const c = document.getElementById('calendar-container');
-      c.innerHTML = '';
+      const container = document.getElementById('calendar-container');
+      container.innerHTML = '';
 
       // Header mese
       const nav = document.createElement('div'); nav.className = 'calendar-header';
       let mName = d0.toLocaleString('it-IT',{month:'long'});
-      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
-      const btnP = createNav('‹', ()=>renderCalendar(new Date(Y,M-1,1)));
-      const title = document.createElement('h2'); title.textContent = `${mName} ${Y}`;
-      const btnN = createNav('›', ()=>renderCalendar(new Date(Y,M+1,1)));
-      nav.append(btnP, title, btnN);
-      c.append(nav);
+      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
+      nav.append(
+        createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
+        Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
+        createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
+      );
+      container.append(nav);
 
       // Corpo tabella
       const tbl   = document.createElement('table'),
             thead = tbl.createTHead(), hr = thead.insertRow(),
             tbody = tbl.createTBody();
-      wds.forEach(d=>{
-        const th = document.createElement('th');
-        th.textContent = d;
-        hr.append(th);
-      });
-
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; hr.append(th); });
       let day = 1;
       for(let r=0; r<rows; r++){
         const tr = tbody.insertRow();
@@ -132,58 +138,97 @@
           if(idx < first || day > dim){
             td.innerHTML = '';
           } else {
-            const iso = `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className = 'calendar-cell';
-            td.dataset.date = iso;
+            const iso = `${Y}-${String(M+1).padStart(2,'0')}-${String(day++).padStart(2,'0')}`;
+            td.className = 'calendar-cell'; td.dataset.date = iso;
             if(i===6 || hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML = `<div>${day}</div><div class="slots-container"></div>`;
-            day++;
+            td.innerHTML = `<div>${iso.slice(-2)}</div><div class="slots-container"></div>`;
           }
         }
       }
-      c.append(tbl);
+      container.append(tbl);
 
-      // Preleva slot liberi e visibili
-      const q = query(
-        collection(db,'slots'),
-        where('libero','==',true),
-        where('visibile','==',true)
+      // Recupera solo slot liberi & visibili e raggruppa per data
+      const snap = await getDocs(
+        query(collection(db,'slots'),
+              where('libero','==',true),
+              where('visibile','==',true))
       );
-      const snap = await getDocs(q);
+      const freeByDate = {};
       snap.forEach(ds=>{
-        const s    = ds.data(),
-              cell = document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
-        if(!cell) return;
-        const el = document.createElement('div');
-        el.className = 'slot free';
-        el.innerHTML = `<span>${s.time}</span>`;
-        el.onclick = ()=>openBooking(ds.id, s.date, s.time);
-        cell.append(el);
+        const s = ds.data();
+        (freeByDate[s.date] ||= []).push({ id: ds.id, time: s.time });
+      });
+
+      // Popola cellule: max 4 + “Vedi altri”
+      document.querySelectorAll('.calendar-cell').forEach(cell=>{
+        const date = cell.dataset.date,
+              sc   = cell.querySelector('.slots-container'),
+              arr  = (freeByDate[date] || []).sort((a,b)=>a.time.localeCompare(b.time));
+        // i primi 4
+        arr.slice(0,4).forEach(s=>{
+          const el = document.createElement('div');
+          el.className = 'slot free';
+          el.textContent = s.time;
+          el.onclick   = ()=>openBooking(s.id,date,s.time);
+          sc.append(el);
+        });
+        // Se ne restano altri, aggiungi link
+        if(arr.length > 4){
+          const more = document.createElement('a');
+          more.href = '#';
+          more.className = 'more-link';
+          more.textContent = `Vedi altri ${arr.length - 4} slot`;
+          more.onclick = e => {
+            e.preventDefault();
+            openMorePopup(date, arr.slice(4));
+          };
+          sc.append(more);
+        }
       });
     }
 
-    function createNav(txt, onClick){
+    function createNav(symbol,fn){
       const b = document.createElement('button');
       b.className = 'btn-nav';
-      b.textContent = txt;
-      b.onclick = onClick;
+      b.textContent = symbol;
+      b.onclick = fn;
       return b;
     }
 
-    // --- Booking Modal ---
-    function openBooking(id, date, time){
+    // --- 4) Popup “Vedi altri” ---
+    function openMorePopup(date, slots){
+      const pm = document.getElementById('more-modal-user'),
+            list = document.getElementById('more-list-user');
+      list.innerHTML = '';
+      slots.forEach(s=>{
+        const el = document.createElement('div');
+        el.className = 'slot free';
+        el.textContent = s.time;
+        el.onclick = () => {
+          pm.classList.remove('active');
+          openBooking(s.id, date, s.time);
+        };
+        list.append(el);
+      });
+      pm.classList.add('active');
+    }
+    document.querySelectorAll('#more-modal-user .close-btn')
+      .forEach(b=>b.onclick = ()=>b.closest('.modal').classList.remove('active'));
+
+    // --- 5) Booking Modal ---
+    function openBooking(id,date,time){
       bookingCtx.id = id;
-      const m = document.getElementById('booking-modal');
-      m.querySelector('#bm-date').textContent = date;
-      m.querySelector('#bm-time').textContent = time;
-      m.querySelector('#bm-name').value = '';
-      m.querySelector('#bm-phone').value = '';
-      m.classList.add('active');
+      const bm = document.getElementById('booking-modal');
+      bm.querySelector('#bm-date').textContent = date;
+      bm.querySelector('#bm-time').textContent = time;
+      bm.querySelector('#bm-name').value   = '';
+      bm.querySelector('#bm-phone').value  = '';
+      bm.classList.add('active');
     }
     document.querySelectorAll('#booking-modal .close-btn')
       .forEach(b=>b.onclick = ()=>b.closest('.modal').classList.remove('active'));
 
-    document.getElementById('bm-confirm').onclick = async ()=>{
+    document.getElementById('bm-confirm').onclick = async () => {
       const name  = document.getElementById('bm-name').value.trim(),
             phone = document.getElementById('bm-phone').value.trim();
       if(!name || !phone){
