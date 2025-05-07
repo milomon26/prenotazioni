@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin – Prenotazioni</title>
-  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Blocca ogni ricerca di /favicon.ico -->
+  <link rel="icon" href="data:,"/>
+  <link rel="shortcut icon" href="data:,"/>
+
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <!-- Loader -->
@@ -13,8 +18,8 @@
   <!-- Topbar login / strumenti -->
   <header class="topbar">
     <div id="login-controls">
-      <input type="text" id="admin-username" placeholder="Username" autocomplete="off" />
-      <input type="password" id="admin-password" placeholder="Password" autocomplete="off" />
+      <input type="text" id="admin-username" placeholder="Username" autocomplete="off"/>
+      <input type="password" id="admin-password" placeholder="Password" autocomplete="off"/>
       <button id="admin-login-btn" class="btn">Login</button>
     </div>
     <div id="admin-tools" style="display:none">
@@ -28,7 +33,7 @@
     <div id="calendar-container"></div>
   </main>
 
-  <!-- Wizard Modal -->
+  <!-- WIZARD Modal -->
   <div id="wizard-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
@@ -36,11 +41,11 @@
       <div class="datepicker-group">
         <div class="datepicker-field">
           <label for="start-date">Inizio:</label>
-          <input type="date" id="start-date" />
+          <input type="date" id="start-date"/>
         </div>
         <div class="datepicker-field">
           <label for="end-date">Fine:</label>
-          <input type="date" id="end-date" />
+          <input type="date" id="end-date"/>
         </div>
       </div>
       <div id="weekday-list"></div>
@@ -48,17 +53,17 @@
     </div>
   </div>
 
-  <!-- Timepicker Modal -->
+  <!-- TIMEPICKER Modal -->
   <div id="timepicker-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
-      <label><input type="checkbox" id="select-all" /> Seleziona tutto</label>
+      <label><input type="checkbox" id="select-all"/> Seleziona tutto</label>
       <div id="hour-list"></div>
       <button id="timepicker-save" class="btn">Conferma orari</button>
     </div>
   </div>
 
-  <!-- More Slots Modal -->
+  <!-- MORE-SLOTS Modal -->
   <div id="more-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
@@ -67,7 +72,7 @@
     </div>
   </div>
 
-  <!-- Confirm Delete Modal -->
+  <!-- CONFIRM DELETE Modal -->
   <div id="confirm-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
@@ -79,18 +84,18 @@
     </div>
   </div>
 
-  <!-- Slot Info Modal -->
+  <!-- SLOT INFO Modal -->
   <div id="slot-info-modal" class="modal">
     <div class="modal-content">
       <button class="close-btn">&times;</button>
       <h3>Info Slot</h3>
-      <div class="info-row"><strong>Data:</strong> <span id="info-date"></span></div>
-      <div class="info-row"><strong>Ora:</strong>  <span id="info-time"></span></div>
-      <div class="info-row"><strong>Nome:</strong> <span id="info-nome"></span></div>
-      <div class="info-row"><strong>Telefono:</strong> <span id="info-telefono"></span></div>
-      <div class="info-row"><strong>Libero:</strong>  <span id="info-libero"></span></div>
-      <div class="info-row"><strong>Visibile:</strong><span id="info-visibile"></span></div>
-      <div class="info-row"><strong>Dove:</strong>  <span id="info-dove"></span></div>
+      <div><strong>Data:</strong> <span id="info-date"></span></div>
+      <div><strong>Ora:</strong>  <span id="info-time"></span></div>
+      <div><strong>Nome:</strong> <span id="info-nome"></span></div>
+      <div><strong>Telefono:</strong> <span id="info-telefono"></span></div>
+      <div><strong>Libero:</strong>  <span id="info-libero"></span></div>
+      <div><strong>Visibile:</strong><span id="info-visibile"></span></div>
+      <div><strong>Dove:</strong>  <span id="info-dove"></span></div>
     </div>
   </div>
 
@@ -101,7 +106,7 @@
       addDoc, updateDoc, deleteDoc, doc, onSnapshot, getDoc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // 1) Init Firebase
+    // --- 1) Firebase Init ---
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -112,48 +117,20 @@
     });
     const db = getFirestore();
 
-    // 2) Login / Logout
-    const loginCtr   = document.getElementById('login-controls'),
-          adminTools = document.getElementById('admin-tools');
-    document.getElementById('admin-login-btn').onclick = async () => {
-      const u = document.getElementById('admin-username').value.trim(),
-            p = document.getElementById('admin-password').value.trim();
-      if (!u||!p){ alert('Inserisci credenziali'); return; }
-      const snap = await getDocs(
-        query(collection(db,'users'),
-              where('username','==',u),
-              where('password','==',p))
-      );
-      if (snap.empty) {
-        alert('Credenziali non valide');
-      } else {
-        sessionStorage.setItem('adminUser',u);
-        initAdmin();
-      }
-    };
-    document.getElementById('logout-btn').onclick = () => {
-      sessionStorage.removeItem('adminUser');
-      location.reload();
-    };
-
-    // 3) Se già loggato → initAdmin
-    let currentMonth = new Date();
-    if (sessionStorage.getItem('adminUser')) initAdmin();
-
-    function initAdmin(){
-      loginCtr.style.display   = 'none';
-      adminTools.style.display = 'flex';
-      renderCalendar(currentMonth);
-      attachWizardLogic();
-      setupConfirmModal();
-      setupSlotInfoModal();
-      onSnapshot(collection(db,'slots'),
-        ()=>renderCalendar(currentMonth)
-      );
+    // --- 2) Helper festività italiane ---
+    function calculateEaster(Y){
+      const a=Y%19,b=Math.floor(Y/100),c=Y%100,
+            d=Math.floor(b/4),e=b%4,
+            f=Math.floor((b+8)/25),
+            g=Math.floor((b-f+1)/3),
+            h=(19*a+b-d-g+15)%30,
+            i=Math.floor(c/4),k=c%4,
+            L=(32+2*e+2*i-h-k)%7,
+            m=Math.floor((a+11*h+22*L)/451),
+            month=Math.floor((h+L-7*m+114)/31),
+            day=((h+L-7*m+114)%31)+1;
+      return new Date(Y,month-1,day);
     }
-
-    // 4) Pasqua & festività (stessa implementazione di index.html)
-    function calculateEaster(Y){ /* … */ }
     function getHolidays(Y){
       const pad=n=>String(n).padStart(2,'0'),
             eas=calculateEaster(Y),
@@ -170,11 +147,290 @@
       ];
     }
 
-    // 5) renderCalendar(), createNav(), deleteSlot(), setupConfirmModal(),
-    //    setupSlotInfoModal(), openInfoModal() e attachWizardLogic()
-    //    → Usa esattamente le stesse funzioni già testate in precedenza.
-    //    Assicurati di copiarle **tutte** in coda a questo script.
+    // --- 3) Render calendario admin ---
+    async function renderCalendar(d0){
+      const Y=d0.getFullYear(),M=d0.getMonth(),
+            dim=new Date(Y,M+1,0).getDate(),
+            first=(new Date(Y,M,1).getDay()+6)%7,
+            rows=Math.ceil((first+dim)/7),
+            hols=getHolidays(Y),
+            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
+      const cont=document.getElementById('calendar-container');
+      cont.innerHTML='';
+
+      // Header mese
+      const nav=document.createElement('div');
+      nav.className='calendar-header';
+      let mName=d0.toLocaleString('it-IT',{month:'long'});
+      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
+      nav.append(
+        createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
+        Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
+        createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
+      );
+      cont.append(nav);
+
+      // Tabella
+      const tbl=cont.appendChild(document.createElement('table')),
+            thead=tbl.createTHead(), hr=thead.insertRow(),
+            tbody=tbl.createTBody();
+      wds.forEach(d=>{const th=document.createElement('th');th.textContent=d;hr.append(th);});
+      let day=1;
+      for(let r=0;r<rows;r++){
+        const tr=tbody.insertRow();
+        for(let i=0;i<7;i++){
+          const td=tr.insertCell(), idx=r*7+i;
+          if(idx<first||day>dim){ td.innerHTML=''; }
+          else {
+            const dd=String(day).padStart(2,'0'),
+                  iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
+            td.className='calendar-cell'; td.dataset.date=iso;
+            if(i===6||hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML=`
+              <div>${dd}</div>
+              <div class="slots-container"></div>
+              <div class="more-container"></div>
+            `;
+            day++;
+          }
+        }
+      }
+
+      // Recupera tutti gli slot
+      const snap=await getDocs(collection(db,'slots')), byDate={};
+      snap.forEach(ds=>{
+        const s=ds.data();
+        (byDate[s.date]||=[]).push({id:ds.id,...s});
+      });
+
+      // Popola
+      document.querySelectorAll('.calendar-cell').forEach(cell=>{
+        const date=cell.dataset.date,
+              sc=cell.querySelector('.slots-container'),
+              mc=cell.querySelector('.more-container'),
+              arr=(byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
+
+        // primi 4
+        arr.slice(0,4).forEach(s=>{
+          const el=document.createElement('div');
+          el.className='slot '+(s.libero?'free':'booked');
+          el.onclick=()=>openInfoModal(s.id);
+          el.innerHTML=`
+            <span>${s.time}</span>
+            <button class="btn-icon trash" onclick="deleteSlot('${s.id}',event)">🗑️</button>
+          `;
+          sc.append(el);
+        });
+        // “Vedi altri”
+        if(arr.length>4){
+          const cnt=arr.length-4, link=document.createElement('a');
+          link.href='#'; link.textContent=`Vedi altri ${cnt} slot`;
+          link.onclick=e=>{
+            e.preventDefault();
+            const ml=document.getElementById('more-list');
+            ml.innerHTML='';
+            arr.slice(4).forEach(s2=>{
+              const el2=document.createElement('div');
+              el2.className='slot '+(s2.libero?'free':'booked');
+              el2.onclick=()=>openInfoModal(s2.id);
+              el2.innerHTML=`
+                <span>${s2.time}</span>
+                <button class="btn-icon trash" onclick="deleteSlot('${s2.id}',event)">🗑️</button>
+              `;
+              ml.append(el2);
+            });
+            document.getElementById('more-modal').classList.add('active');
+          };
+          mc.append(link);
+        }
+      });
+    }
+
+    function createNav(txt,fn){
+      const b=document.createElement('button');
+      b.className='btn-nav'; b.textContent=txt; b.onclick=fn;
+      return b;
+    }
+
+    // --- 4) DELETE slot con conferma ---
+    let pendingId=null;
+    window.deleteSlot=(id,e)=>{
+      e.stopPropagation();
+      pendingId=id;
+      document.getElementById('confirm-modal').classList.add('active');
+    };
+    function setupConfirmModal(){
+      document.getElementById('confirm-yes').onclick=async()=>{
+        await deleteDoc(doc(db,'slots',pendingId));
+        document.getElementById('confirm-modal').classList.remove('active');
+        renderCalendar(currentMonth);
+      };
+      document.getElementById('confirm-no').onclick=()=>{
+        document.getElementById('confirm-modal').classList.remove('active');
+      };
+      document.querySelectorAll('#confirm-modal .close-btn')
+        .forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
+    }
+
+    // --- 5) Info slot popup ---
+    function setupSlotInfoModal(){
+      document.querySelectorAll('#slot-info-modal .close-btn')
+        .forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
+    }
+    async function openInfoModal(id){
+      const ds=await getDoc(doc(db,'slots',id)), s=ds.data();
+      document.getElementById('info-date').textContent    =s.date;
+      document.getElementById('info-time').textContent    =s.time;
+      document.getElementById('info-nome').textContent    =s.nome;
+      document.getElementById('info-telefono').textContent=s.telefono;
+      document.getElementById('info-libero').textContent  =(s.libero?'Sì':'No');
+      document.getElementById('info-visibile').textContent=(s.visibile?'Sì':'No');
+      document.getElementById('info-dove').textContent    =s.dove;
+      document.getElementById('slot-info-modal').classList.add('active');
+    }
+
+    // --- 6) WIZARD & TIMEPICKER logic ---
+    function attachWizardLogic(){
+      const wz=document.getElementById('wizard-btn'),
+            wm=document.getElementById('wizard-modal'),
+            tp=document.getElementById('timepicker-modal'),
+            sd=document.getElementById('start-date'),
+            ed=document.getElementById('end-date'),
+            wl=document.getElementById('weekday-list'),
+            hl=document.getElementById('hour-list'),
+            ws=document.getElementById('wizard-save'),
+            ts=document.getElementById('timepicker-save'),
+            sa=document.getElementById('select-all');
+      let ctx=null;
+
+      // Apri wizard
+      wz.onclick=()=>{
+        sd.value=''; ed.value=''; wl.innerHTML='';
+        ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica']
+          .forEach(d=>{
+            const row=document.createElement('div');
+            row.className='weekday-row';
+            row.innerHTML=`
+              <label><input type="checkbox" data-day="${d}"/> ${d}</label>
+              <button class="btn btn-icon" data-day="${d}">🕒</button>
+            `;
+            wl.append(row);
+          });
+        wm.classList.add('active');
+      };
+      // Chiudi modali
+      wm.querySelector('.close-btn').onclick = ()=>wm.classList.remove('active');
+      tp.querySelector('.close-btn').onclick = ()=>tp.classList.remove('active');
+      document.getElementById('more-modal').querySelector('.close-btn')
+        .onclick = ()=>document.getElementById('more-modal').classList.remove('active');
+
+      // Apri timepicker per ciascun giorno
+      wl.addEventListener('click',e=>{
+        if(e.target.tagName==='BUTTON'){
+          const day=e.target.dataset.day;
+          ctx={day,times:[]};
+          hl.innerHTML='';
+          for(let h=7;h<=20;h++){
+            const hrStr=String(h).padStart(2,'0')+':00';
+            const row=document.createElement('div');
+            row.innerHTML=`
+              <label>
+                <input type="checkbox" data-hour="${hrStr}"/> ${hrStr}
+              </label>
+            `;
+            hl.append(row);
+          }
+          sa.checked=false;
+          tp.classList.add('active');
+        }
+      });
+      // Select_all
+      sa.onchange = ()=>hl.querySelectorAll('input[type="checkbox"]')
+        .forEach(cb=>cb.checked=sa.checked);
+
+      // Conferma orari
+      ts.onclick=()=>{
+        const chosen=Array.from(hl.querySelectorAll('input:checked'))
+          .map(cb=>cb.dataset.hour);
+        const dayRow=wl.querySelector(`input[data-day="${ctx.day}"]`)
+                           .closest('div');
+        dayRow.querySelector('.time-summary')?.remove();
+        const sum=document.createElement('div');
+        sum.className='time-summary';
+        sum.textContent=chosen.join(', ');
+        dayRow.append(sum);
+        tp.classList.remove('active');
+      };
+
+      // Salva wizard → crea documenti in Firebase
+      ws.onclick=async()=>{
+        if(!sd.value||!ed.value){ alert('Date obbligatorie'); return; }
+        const selectedDays=Array.from(wl.querySelectorAll('input[type="checkbox"]:checked'))
+                          .map(cb=>cb.dataset.day);
+        const timesPerDay={};
+        wl.querySelectorAll('.weekday-row').forEach(r=>{
+          const d=r.querySelector('input').dataset.day;
+          const ts=r.querySelector('.time-summary');
+          if(ts) timesPerDay[d]=ts.textContent.split(', ');
+        });
+        // ciclo date
+        let cur=new Date(sd.value),
+            end=new Date(ed.value);
+        while(cur<=end){
+          const iso=cur.toISOString().slice(0,10),
+                wd=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'][cur.getDay()];
+          if(selectedDays.includes(wd)){
+            for(const t of (timesPerDay[wd]||[])){
+              await addDoc(collection(db,'slots'),{
+                date:iso,
+                time:t,
+                nome:'',
+                telefono:'',
+                libero:true,
+                visibile:true,
+                dove:''
+              });
+            }
+          }
+          cur.setDate(cur.getDate()+1);
+        }
+        wm.classList.remove('active');
+      };
+    }
+
+    // --- 7) Login / Logout Admin & init ---
+    const loginCtr=document.getElementById('login-controls'),
+          adminTools=document.getElementById('admin-tools');
+    document.getElementById('admin-login-btn').onclick=async()=>{
+      const u=document.getElementById('admin-username').value.trim(),
+            p=document.getElementById('admin-password').value.trim();
+      if(!u||!p){ alert('Inserisci credenziali'); return; }
+      const snap=await getDocs(
+        query(collection(db,'users'),
+              where('username','==',u),
+              where('password','==',p))
+      );
+      if(snap.empty){ alert('Credenziali non valide'); }
+      else { sessionStorage.setItem('adminUser',u); initAdmin(); }
+    };
+    document.getElementById('logout-btn').onclick=()=>{
+      sessionStorage.removeItem('adminUser');
+      location.reload();
+    };
+
+    let currentMonth=new Date();
+    if(sessionStorage.getItem('adminUser')) initAdmin();
+
+    function initAdmin(){
+      loginCtr.style.display='none';
+      adminTools.style.display='flex';
+      renderCalendar(currentMonth);
+      attachWizardLogic();
+      setupConfirmModal();
+      setupSlotInfoModal();
+      onSnapshot(collection(db,'slots'),()=>renderCalendar(currentMonth));
+    }
   </script>
 </body>
 </html>
