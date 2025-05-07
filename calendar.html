@@ -65,7 +65,7 @@
       addDoc, updateDoc, deleteDoc, doc
     }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // --- 1) Inizializza Firebase ---
+    // 1) Inizializza Firebase
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -76,7 +76,7 @@
     });
     const db = getFirestore();
 
-    // --- 2) Calcolo Pasqua & Festività italiane ---
+    // 2) Calcolo Pasqua e festività italiane
     function calculateEaster(Y) {
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
@@ -98,28 +98,28 @@
       const pm=pmo.getMonth()+1, pd=pmo.getDate(),
             pasq=`${Y}-${pad(pm)}-${pad(pd)}`;
       return [
-        `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
+        `${Y}-01-01`,`${Y}-01-06`, pas, pasq,
         `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,
         `${Y}-06-29`,`${Y}-08-15`,`${Y}-11-01`,
         `${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`
       ];
     }
 
-    // --- 3) Guard Login & Logout ---
+    // 3) Guard login + logout
     if (!sessionStorage.getItem('user')) location.href='index.html';
     document.getElementById('logout-btn').onclick = ()=>{
       sessionStorage.removeItem('user');
       location.href='index.html';
     };
 
-    // --- 4) Stato mese corrente & init ---
+    // 4) Stato mese e init
     let currentMonthDate = new Date();
     window.addEventListener('DOMContentLoaded', ()=>{
       renderCalendar(currentMonthDate);
       attachWizardLogic();
     });
 
-    // --- 5) renderCalendar ---
+    // 5) renderCalendar
     async function renderCalendar(d0) {
       currentMonthDate = d0;
       const Y     = d0.getFullYear(),
@@ -133,10 +133,10 @@
       const c = document.getElementById('calendar-container');
       c.innerHTML = '';
 
-      // Header con navigazione
-      const nav = document.createElement('div'); nav.className='calendar-header';
-      let mName = d0.toLocaleString('it-IT',{month:'long'});
-      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
+      // Header mese
+      const nav=document.createElement('div'); nav.className='calendar-header';
+      let mName=d0.toLocaleString('it-IT',{month:'long'});
+      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
       const btnP=document.createElement('button'); btnP.className='btn-nav'; btnP.textContent='‹';
       btnP.onclick=()=>renderCalendar(new Date(Y,M-1,1));
       const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
@@ -147,7 +147,7 @@
       // Tabella
       const tbl=c.appendChild(document.createElement('table')),
             thead=tbl.createTHead(), hr=thead.insertRow();
-      wds.forEach(d=>{const th=document.createElement('th'); th.textContent=d; hr.append(th);});
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; hr.append(th); });
       const tbody=tbl.createTBody();
       let day=1;
       for(let r=0;r<rows;r++){
@@ -165,11 +165,11 @@
         }
       }
 
-      // Carica slot esistenti
-      const snap=await getDocs(collection(db,'slots'));
+      // Carica slot
+      const snap = await getDocs(collection(db,'slots'));
       snap.forEach(ds=>{
         const s=ds.data(),
-              cell=document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
+              cell = document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
         if(!cell) return;
         const el=document.createElement('div');
         el.className='slot '+(s.libero?'free':'');
@@ -185,7 +185,7 @@
     window.updateSlotVisibility=async(cb,id)=>{ await updateDoc(doc(db,'slots',id),{visibile:cb.checked}); };
     window.deleteSlot=async(id,btn)=>{ await deleteDoc(doc(db,'slots',id)); btn.closest('.slot').remove(); };
 
-    // --- 6) Wizard & Timepicker + SALVATAGGIO ---
+    // 6) Wizard & Timepicker + Salvataggio
     function attachWizardLogic(){
       const loader=document.getElementById('loader'),
             wz=document.getElementById('wizard-btn'),
@@ -225,8 +225,7 @@
           div.className='hour-row'; c.type='checkbox';
           for(let hh=7;hh<=20;hh++){
             const o=document.createElement('option');
-            o.value=o.textContent=String(hh).padStart(2,'0');
-            sh.append(o);
+            o.value=o.textContent=String(hh).padStart(2,'0'); sh.append(o);
           }
           sh.value=String(h).padStart(2,'0');
           ['00','15','30','45'].forEach(mm=>{
@@ -238,61 +237,60 @@
           hl.append(div);
         }
       }
-      sa.onclick=()=>hl.querySelectorAll('input[type=checkbox]').forEach(ch=>ch.checked=sa.checked);
+      sa.onclick=()=>hl.querySelectorAll('input[type="checkbox"]').forEach(ch=>ch.checked=sa.checked);
       ts.onclick=()=>{
-        const times=[]; hl.querySelectorAll('.hour-row').forEach(r=>{
-          const c=r.querySelector('input[type=checkbox]'),
+        const times=[];
+        hl.querySelectorAll('.hour-row').forEach(r=>{
+          const c=r.querySelector('input[type="checkbox"]'),
                 [sh,sm]=r.querySelectorAll('select');
           if(c.checked) times.push(`${sh.value}:${sm.value}`);
         });
         ctx.sel.innerHTML=times.map(t=>`<span>${t}<button class="remove-time">×</button></span>`).join('');
-        ctx.sel.querySelectorAll('.remove-time')
-          .forEach(b=>b.onclick=ev=>ev.target.closest('span').remove());
+        ctx.sel.querySelectorAll('.remove-time').forEach(b=>b.onclick=ev=>ev.target.closest('span').remove());
         ctx.cb.checked = ctx.sel.childElementCount>0;
         tp.classList.remove('active');
       };
 
       ws.onclick=async()=>{
-        // 1) Validazione date
+        // Validazione
         const start=sd.valueAsDate, end=ed.valueAsDate;
-        if(!start||!end){ alert('Seleziona inizio e fine'); return; }
+        if(!start||!end){ alert('Seleziona le date'); return; }
         if(start>end){ alert('Intervallo non valido'); return; }
 
-        // 2) Costruzione payloads
+        // Costruzione payloads
         const payloads = [];
         wl.querySelectorAll('.weekday-row').forEach(row=>{
-          const cb = row.querySelector('input[type=checkbox]'),
-                dayName = cb.dataset.day;
+          const cb = row.querySelector('input[type="checkbox"]'),
+                targetDay = cb.dataset.day.toLowerCase();
           if(!cb.checked) return;
           row.querySelectorAll('.selected-times span').forEach(sp=>{
             const t = sp.textContent.replace('×','').trim();
             for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-              if(d.toLocaleDateString('it-IT',{weekday:'long'})===dayName){
+              // confronto case-insensitive
+              const wd = d.toLocaleDateString('it-IT',{weekday:'long'}).toLowerCase();
+              if(wd === targetDay){
                 payloads.push({
-                  date:     d.toISOString().slice(0,10),
-                  time:     t,
-                  nome:     '',
+                  date: d.toISOString().slice(0,10),
+                  time: t,
+                  nome: '',
                   telefono: '',
-                  libero:   true,
+                  libero: true,
                   visibile: true,
-                  dove:     ''
+                  dove: ''
                 });
               }
             }
           });
         });
 
-        if(payloads.length===0){
+        if(payloads.length === 0){
           alert('Nessuno slot da salvare: verifica giorni e orari');
           return;
         }
 
-        console.log('Payloads da salvare:');
         console.table(payloads);
-
-        // 3) Salvataggio in Firestore
         loader.classList.add('active');
-        await Promise.all(payloads.map(p=>addDoc(collection(db,'slots'),p)));
+        await Promise.all(payloads.map(p=>addDoc(collection(db,'slots'), p)));
         loader.classList.remove('active');
         wm.classList.remove('active');
         renderCalendar(currentMonthDate);
