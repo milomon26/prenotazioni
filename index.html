@@ -9,9 +9,9 @@
 </head>
 <body>
 
-  <!-- Header con link all'area Admin -->
+  <!-- Header utente -->
   <header class="header">
-    <a href="admin.html" class="btn">Area Admin</a>
+    <a href="admin.html" class="btn admin-link">Area Admin</a>
   </header>
 
   <!-- Booking Modal -->
@@ -44,6 +44,7 @@
       updateDoc, doc
     }                             from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
+    // --- Firebase init ---
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -54,102 +55,145 @@
     });
     const db = getFirestore();
 
-    function calculateEaster(Y){ /* identico a prima */ }
-    function getHolidays(Y){ /* identico a prima */ }
+    // --- Pasqua & festività italiane ---
+    function calculateEaster(Y) {
+      const a=Y%19,b=Math.floor(Y/100),c=Y%100,
+            d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+            g=Math.floor((b-f+1)/3),
+            h=(19*a+b-d-g+15)%30,
+            i=Math.floor(c/4),k=c%4,
+            L=(32+2*e+2*i-h-k)%7,
+            m=Math.floor((a+11*h+22*L)/451),
+            month=Math.floor((h+L-7*m+114)/31),
+            day=((h+L-7*m+114)%31)+1;
+      return new Date(Y,month-1,day);
+    }
+    function getHolidays(Y) {
+      const pad=n=>String(n).padStart(2,'0'),
+            eas=calculateEaster(Y),
+            em=eas.getMonth()+1, ed=eas.getDate(),
+            pas=`${Y}-${pad(em)}-${pad(ed)}`,
+            ang=new Date(eas);
+      ang.setDate(ed+1);
+      const am=ang.getMonth()+1, ad=ang.getDate(),
+            pasq=`${Y}-${pad(am)}-${pad(ad)}`;
+      return [
+        `${Y}-01-01`,`${Y}-01-06`, pas, pasq,
+        `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,
+        `${Y}-06-29`,`${Y}-08-15`,`${Y}-11-01`,
+        `${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`
+      ];
+    }
 
     let currentDate = new Date(),
         bookingCtx = {};
 
     window.addEventListener('DOMContentLoaded', ()=>renderCalendar(currentDate));
 
+    // --- Render calendario utente ---
     async function renderCalendar(d0){
-      currentDate=d0;
-      const Y=d0.getFullYear(), M=d0.getMonth(),
-            dim=new Date(Y,M+1,0).getDate(),
-            first=(new Date(Y,M,1).getDay()+6)%7,
-            rows=Math.ceil((first+dim)/7),
-            hols=getHolidays(Y),
-            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
-      const c=document.getElementById('calendar-container');
-      c.innerHTML='';
+      currentDate = d0;
+      const Y   = d0.getFullYear(),
+            M   = d0.getMonth(),
+            dim = new Date(Y,M+1,0).getDate(),
+            first = (new Date(Y,M,1).getDay()+6)%7,
+            rows  = Math.ceil((first+dim)/7),
+            hols  = getHolidays(Y),
+            wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+      const c = document.getElementById('calendar-container');
+      c.innerHTML = '';
 
       // Header mese
-      const nav=document.createElement('div'); nav.className='calendar-header';
-      let mName=d0.toLocaleString('it-IT',{month:'long'});
-      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
-      const btnP=createBtn('‹',()=>renderCalendar(new Date(Y,M-1,1)));
-      const title=document.createElement('h2'); title.textContent=`${mName} ${Y}`;
-      const btnN=createBtn('›',()=>renderCalendar(new Date(Y,M+1,1)));
-      nav.append(btnP,title,btnN); c.append(nav);
+      const nav = document.createElement('div'); nav.className = 'calendar-header';
+      let mName = d0.toLocaleString('it-IT',{month:'long'});
+      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
+      const btnP = createNav('‹', ()=>renderCalendar(new Date(Y,M-1,1)));
+      const title = document.createElement('h2'); title.textContent = `${mName} ${Y}`;
+      const btnN = createNav('›', ()=>renderCalendar(new Date(Y,M+1,1)));
+      nav.append(btnP, title, btnN);
+      c.append(nav);
 
-      // Tabella
-      const tbl=c.appendChild(document.createElement('table')),
-            thead=tbl.createTHead(), hr=thead.insertRow(),
-            tbody=tbl.createTBody();
-      wds.forEach(d=>{const th=document.createElement('th'); th.textContent=d; hr.append(th);});
-      let day=1;
-      for(let r=0;r<rows;r++){
-        const tr=tbody.insertRow();
-        for(let i=0;i<7;i++){
-          const td=tr.insertCell(), idx=r*7+i;
-          if(idx<first||day>dim){ td.innerHTML=''; }
-          else {
-            const iso=`${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            td.className='calendar-cell'; td.dataset.date=iso;
-            if(i===6||hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML=`<div>${day}</div><div class="slots-container"></div>`;
+      // Corpo tabella
+      const tbl   = document.createElement('table'),
+            thead = tbl.createTHead(), hr = thead.insertRow(),
+            tbody = tbl.createTBody();
+      wds.forEach(d=>{
+        const th = document.createElement('th');
+        th.textContent = d;
+        hr.append(th);
+      });
+
+      let day = 1;
+      for(let r=0; r<rows; r++){
+        const tr = tbody.insertRow();
+        for(let i=0; i<7; i++){
+          const td = tr.insertCell(), idx = r*7+i;
+          if(idx < first || day > dim){
+            td.innerHTML = '';
+          } else {
+            const iso = `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            td.className = 'calendar-cell';
+            td.dataset.date = iso;
+            if(i===6 || hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML = `<div>${day}</div><div class="slots-container"></div>`;
             day++;
           }
         }
       }
+      c.append(tbl);
 
-      // Slot liberi e visibili
-      const qFree=query(
+      // Preleva slot liberi e visibili
+      const q = query(
         collection(db,'slots'),
         where('libero','==',true),
         where('visibile','==',true)
       );
-      const snap=await getDocs(qFree);
+      const snap = await getDocs(q);
       snap.forEach(ds=>{
-        const s=ds.data(),
-              cell=document.querySelector(
-                `.calendar-cell[data-date="${s.date}"] .slots-container`
-              );
+        const s    = ds.data(),
+              cell = document.querySelector(`.calendar-cell[data-date="${s.date}"] .slots-container`);
         if(!cell) return;
-        const el=document.createElement('div');
-        el.className='slot free';
-        el.innerHTML=`<span>${s.time}</span>`;
-        el.onclick=()=>openBooking(ds.id,s.date,s.time);
+        const el = document.createElement('div');
+        el.className = 'slot free';
+        el.innerHTML = `<span>${s.time}</span>`;
+        el.onclick = ()=>openBooking(ds.id, s.date, s.time);
         cell.append(el);
       });
     }
 
-    function createBtn(txt,fn){
-      const b=document.createElement('button');
-      b.className='btn-nav';
-      b.textContent=txt;
-      b.onclick=fn;
+    function createNav(txt, onClick){
+      const b = document.createElement('button');
+      b.className = 'btn-nav';
+      b.textContent = txt;
+      b.onclick = onClick;
       return b;
     }
 
-    function openBooking(id,date,time){
-      bookingCtx={id};
-      const m=document.getElementById('booking-modal');
-      m.querySelector('#bm-date').textContent=date;
-      m.querySelector('#bm-time').textContent=time;
-      m.querySelector('#bm-name').value='';
-      m.querySelector('#bm-phone').value='';
+    // --- Booking Modal ---
+    function openBooking(id, date, time){
+      bookingCtx.id = id;
+      const m = document.getElementById('booking-modal');
+      m.querySelector('#bm-date').textContent = date;
+      m.querySelector('#bm-time').textContent = time;
+      m.querySelector('#bm-name').value = '';
+      m.querySelector('#bm-phone').value = '';
       m.classList.add('active');
     }
     document.querySelectorAll('#booking-modal .close-btn')
-      .forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
+      .forEach(b=>b.onclick = ()=>b.closest('.modal').classList.remove('active'));
 
-    document.getElementById('bm-confirm').onclick=async ()=>{
-      const name=document.getElementById('bm-name').value.trim(),
-            phone=document.getElementById('bm-phone').value.trim();
-      if(!name||!phone){ alert('Inserisci nome e telefono'); return; }
-      await updateDoc(doc(db,'slots',bookingCtx.id),{
-        nome:name, telefono:phone, libero:false
+    document.getElementById('bm-confirm').onclick = async ()=>{
+      const name  = document.getElementById('bm-name').value.trim(),
+            phone = document.getElementById('bm-phone').value.trim();
+      if(!name || !phone){
+        alert('Inserisci nome e telefono');
+        return;
+      }
+      await updateDoc(doc(db,'slots',bookingCtx.id), {
+        nome: name,
+        telefono: phone,
+        libero: false
       });
       document.getElementById('booking-modal').classList.remove('active');
       renderCalendar(currentDate);
