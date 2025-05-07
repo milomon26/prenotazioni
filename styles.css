@@ -1,4 +1,4 @@
-/* Import font “Nunito” per look più “cute” */
+/* Import font “Nunito” per un look più “cute” */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
 
 :root {
@@ -7,19 +7,13 @@
   --accent: #4dd0e1;
   --text: #006064;
   --input-border: 2px solid var(--accent);
-  --green: #a5d6a7;
   --green-light: #d0f8ce;
+  --red-light: #ffcccc;
   --link-color: #00796b;
 }
 
 /* RESET GLOBALE */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* BODY */
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: 'Nunito', sans-serif;
   background: var(--bg);
@@ -27,360 +21,321 @@ body {
   min-height: 100vh;
 }
 
-/* LINK */
-a {
-  color: var(--link-color);
-  text-decoration: none;
-  font-weight: 600;
+/* —————————————————————— */
+/*  LANDING PAGE           */
+/* —————————————————————— */
+.landing {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  gap:2rem;
 }
-a:hover {
-  text-decoration: underline;
-}
+.landing h1 { font-size:2rem; }
+.btn.big   { font-size:1.25rem; padding:1rem 2rem; }
+.btn.small { font-size:.9rem;  padding:.5rem 1rem; }
 
 /* —————————————————————— */
-/* 1) LOGIN PAGE          */
+/*  LINK & BUTTONS         */
+/* —————————————————————— */
+a, .btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+  background:var(--accent);
+  color:white;
+  text-decoration:none;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+  transition:opacity .2s;
+}
+a:hover, .btn:hover { opacity:.8; }
+
+/* —————————————————————— */
+/*  LOGIN CARD (admin)     */
 /* —————————————————————— */
 .login-container {
-  height: 100vh;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-right: 2rem;
-  background: var(--bg);
+  height:100vh;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  padding-right:2rem;
 }
 .login-card {
-  background: var(--card);
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  max-width: 400px;
+  background:var(--card);
+  border-radius:8px;
+  padding:2rem;
+  box-shadow:0 4px 6px rgba(0,0,0,.1);
+  max-width:400px; width:100%;
 }
 .login-card h2 {
-  margin-bottom: 1rem;
-  color: var(--text);
+  margin-bottom:1rem; color:var(--text);
 }
-/* I campi e il button in colonna */
 .login-row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1rem;
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
 }
 .login-row input {
-  padding: .5rem;
-  border: var(--input-border);
-  border-radius: 6px;
-  width: 100%;
+  padding:.5rem;
+  border:var(--input-border);
+  border-radius:6px;
+  width:100%;
 }
 .login-row button.btn {
-  align-self: flex-end;
-  white-space: nowrap;
+  align-self:flex-end;
 }
 
 /* —————————————————————— */
-/* 2) TOPBAR & BUTTONS     */
+/*  TOPBAR (admin)         */
 /* —————————————————————— */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: var(--card);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:1rem;
+  background:var(--card);
 }
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
+.topbar input {
+  padding:.3rem .5rem;
+  border:var(--input-border);
+  border-radius:4px;
+  margin-right:.5rem;
+  font-size:.9rem;
 }
-.btn svg {
-  width: 1.2rem;
-  height: 1.2rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
-}
+#admin-tools { display:flex; gap:.5rem; }
 
 /* —————————————————————— */
-/* 3) CALENDAR             */
+/*  CALENDAR               */
 /* —————————————————————— */
-#calendar-container {
-  padding: 1rem;
-}
+#calendar-container { padding:1rem; }
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--bg);
+  width:100%;
+  border-collapse:collapse;
+  background:var(--bg);
 }
 th, td {
-  border: 1px solid var(--accent);
-  padding: 4px;
-  vertical-align: top;
+  border:1px solid var(--accent);
+  padding:4px;
+  vertical-align:top;
 }
 thead th {
-  background: var(--card);
-  text-align: center;
-  padding: .5rem 0;
-  font-weight: bold;
+  background:var(--card);
+  text-align:center;
+  padding:.5rem 0;
+  font-weight:bold;
 }
 .calendar-cell {
-  position: relative;
-  min-height: 180px;  /* spazio per 4 slot + link */
+  position:relative;
+  min-height:180px;
 }
-.calendar-cell div:first-child {
-  font-weight: bold;
-}
-.calendar-cell.holiday > div:first-child {
-  color: red;
-}
-/* container slot e link */
+.calendar-cell div:first-child { font-weight:bold; }
+.calendar-cell.holiday div:first-child { color:red; }
+
+/* slot + overflow nascosto */
 .slots-container {
-  margin-top: 4px;
-  height: 140px;      /* spazio per 4 slot */
-  overflow: hidden;
-  position: relative;
-}
-.more-container {
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  width: 100%;
-  text-align: center;
+  margin-top:4px;
+  height:140px;
+  overflow:hidden;
+  position:relative;
 }
 .slot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2px 4px;
-  margin-bottom: 2px;
-  border-radius: 4px;
-  font-size: .8rem;
-  background: white;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:2px 4px;
+  margin-bottom:2px;
+  border-radius:4px;
+  font-size:.8rem;
+  background:white;
 }
-.slot.free {
-  background: var(--green-light);
-}
+.slot.free   { background:var(--green-light); cursor:pointer; }
+.slot.booked { background:var(--red-light); cursor:default; }
 .btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
+  background:none;
+  border:none;
+  cursor:pointer;
 }
 .btn-icon svg {
-  width: 1rem;
-  height: 1rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
+  width:1rem; height:1rem;
+  stroke:#006064; stroke-width:2; fill:none;
+}
+
+/* “Vedi altri” sempre in fondo */
+.more-container {
+  position:absolute;
+  bottom:4px; left:0;
+  width:100%;
+  text-align:center;
+}
+.more-container a {
+  color:var(--link-color);
+  font-size:.9rem;
 }
 
 /* —————————————————————— */
-/* 4) MONTH NAVIGATION     */
+/*  MONTH NAVIGATION       */
 /* —————————————————————— */
 .calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 1rem 0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:1rem 0;
 }
 .calendar-header h2 {
-  margin: 0 .5rem;
-  text-transform: capitalize;
+  margin:0 .5rem;
+  text-transform:capitalize;
 }
 .btn-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: .4rem .6rem;
-  border-radius: 6px;
-  background: var(--accent);
-  border: none;
-  cursor: pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.4rem .6rem;
+  background:var(--accent);
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
 .btn-nav svg {
-  width: 1rem;
-  height: 1rem;
-  stroke: #006064;
-  stroke-width: 2;
-  fill: none;
+  width:1rem; height:1rem;
+  stroke:#006064; stroke-width:2; fill:none;
 }
 
 /* —————————————————————— */
-/* 5) MODALS               */
+/*  MODALS                 */
 /* —————————————————————— */
 .modal {
-  display: none;
-  position: fixed;
+  display:none;
+  position:fixed;
   top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.4);
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
+  background:rgba(0,0,0,.4);
+  justify-content:center;
+  align-items:center;
+  z-index:10;
 }
-.modal.active {
-  display: flex;
-}
+.modal.active { display:flex; }
 .modal-content {
-  position: relative;
-  background: var(--card);
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  padding: 1.5rem;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;    /* scroll se troppo alto */
-  overflow-y: auto;
+  position:relative;
+  background:var(--card);
+  border:2px solid var(--accent);
+  border-radius:8px;
+  padding:1.5rem;
+  width:90%; max-width:500px;
+  max-height:90vh;
+  overflow-y:auto;
 }
 .close-btn {
-  position: absolute;
-  top: .5rem;
-  right: .5rem;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: var(--text);
-  cursor: pointer;
+  position:absolute; top:.5rem; right:.5rem;
+  background:none; border:none;
+  font-size:1.2rem; color:var(--text);
+  cursor:pointer;
 }
 
 /* —————————————————————— */
-/* 6) DATEPICKERS          */
+/*  DATEPICKERS & LIST     */
 /* —————————————————————— */
 .datepicker-group {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  display:flex; gap:1rem; margin-bottom:1rem;
 }
 .datepicker-field {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  font-weight: bold;
-  color: var(--text);
+  flex:1; display:flex; flex-direction:column;
+  font-weight:bold; color:var(--text);
 }
 .datepicker-field input[type="date"] {
-  margin-top: .5rem;
-  padding: .5rem;
-  border: var(--input-border);
-  border-radius: 8px;
-}
-
-/* —————————————————————— */
-/* 7) WEEKDAY LIST         */
-/* —————————————————————— */
-#weekday-list {
-  margin-bottom: 1rem;
+  margin-top:.5rem; padding:.5rem;
+  border:var(--input-border); border-radius:8px;
 }
 .weekday-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: .4rem 0;
-  border-top: 1px solid var(--accent);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:.4rem 0;
+  border-top:1px solid var(--accent);
 }
-.weekday-row:first-child {
-  border-top: none;
-}
-.weekday-row input[type="checkbox"] {
-  margin-right: .5rem;
-}
-.weekday-row span {
-  flex: 1;
-  text-align: center;
-}
-
-/* —————————————————————— */
-/* 8) SELECTED TIMES       */
-/* —————————————————————— */
+.weekday-row:first-child { border-top:none; }
+.weekday-row input { margin-right:.5rem; }
+.weekday-row span { flex:1; text-align:center; }
 .selected-times {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: .25rem;
-  margin-left: .5rem;
+  display:inline-flex; flex-wrap:wrap; gap:.25rem;
+  margin-left:.5rem;
 }
 .selected-times span {
-  background: white;
-  border: var(--input-border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: .8rem;
-  display: inline-flex;
-  align-items: center;
+  background:white; border:var(--input-border);
+  border-radius:6px; padding:4px 8px;
+  font-size:.8rem; display:inline-flex;
+  align-items:center;
 }
 .selected-times .remove-time {
-  margin-left: 4px;
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-weight: bold;
-  cursor: pointer;
+  margin-left:4px; background:none;
+  border:none; color:var(--accent);
+  cursor:pointer;
 }
 
 /* —————————————————————— */
-/* 9) CLOCK BUTTON         */
+/*  CLOCK BUTTON           */
 /* —————————————————————— */
 .clock-btn {
-  background: var(--accent);
-  border: none;
-  border-radius: 4px;
-  padding: .3rem;
-  cursor: pointer;
+  background:var(--accent);
+  border:none; border-radius:4px;
+  padding:.3rem; cursor:pointer;
 }
 
 /* —————————————————————— */
-/*10) LOADER / SPINNER     */
+/*  LOADER / SPINNER       */
 /* —————————————————————— */
 #loader {
-  display: none;
-  position: fixed;
-  top:0; left:0;
+  display:none;
+  position:fixed; top:0; left:0;
   width:100%; height:100%;
-  background: rgba(0,0,0,0.3);
-  justify-content: center;
-  align-items: center;
-  z-index: 20;
+  background:rgba(0,0,0,.3);
+  justify-content:center;
+  align-items:center;
+  z-index:20;
 }
-#loader.active {
-  display: flex;
-}
+#loader.active { display:flex; }
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 6px solid var(--card);
-  border-top: 6px solid var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  width:50px; height:50px;
+  border:6px solid var(--card);
+  border-top:6px solid var(--accent);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
 }
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
 }
 
 /* —————————————————————— */
-/*11) TIMEPICKER SELECTS    */
+/*  TIMEPICKER SELECTS      */
 /* —————————————————————— */
-#hour-list select {
-  background: white;
-  border: var(--input-border);
-  border-radius: 6px;
-  padding: 4px 8px;
-  margin: 0 2px;
-  font-size: .9rem;
-}
 .hour-row {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  margin-bottom: .4rem;
+  display:flex; align-items:center;
+  gap:.5rem; margin-bottom:.4rem;
 }
-.hour-row input[type="checkbox"] {
-  margin: 0;
+.hour-row input { margin:0; }
+#hour-list select {
+  background:white; border:var(--input-border);
+  border-radius:6px; padding:4px 8px;
+  font-size:.9rem;
 }
-#select-all {
-  transform: scale(1.2);
-  margin-bottom: .5rem;
+#select-all { transform:scale(1.2); margin-bottom:.5rem; }
+
+/* —————————————————————— */
+/*  BOOKING FORM (user)     */
+/* —————————————————————— */
+#booking-modal .modal-content label {
+  font-weight:bold; display:block; margin-top:.5rem;
+}
+#booking-modal .modal-content input {
+  width:100%; padding:.5rem;
+  border:var(--input-border); border-radius:6px;
+  margin-top:.25rem;
+}
+#booking-modal .modal-content button.btn {
+  margin-top:1rem; width:100%;
 }
