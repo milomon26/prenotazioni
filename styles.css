@@ -1,11 +1,43 @@
-/* Reset globale */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* —————————————————————— */
+/* 1) STILI LOGIN PAGE   */
+/* —————————————————————— */
+
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 2rem;
+  background: var(--bg);
+}
+.login-card {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.login-card h2 {
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.login-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.login-row input {
+  flex: 1;
+  padding: .5rem;
+  border: var(--input-border);
+  border-radius: 6px;
+}
+.login-row button.btn {
+  white-space: nowrap;
 }
 
-/* Palette azzurra “cute” */
+/* —————————————————————— */
+/* 2) VARI */
+/* —————————————————————— */
 :root {
   --bg: #e0f7fa;
   --card: #b2ebf2;
@@ -15,6 +47,9 @@
   --green: #a5d6a7;
 }
 
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
 body {
   font-family: sans-serif;
   background: var(--bg);
@@ -22,32 +57,29 @@ body {
   min-height: 100vh;
 }
 
-/* Topbar */
+/* —————————————————————— */
+/* 3) TOPBAR & BOTTONI     */
+/* —————————————————————— */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 1rem;
   background: var(--card);
 }
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
+  display: inline-flex; align-items: center;
+  gap: .5rem; padding: .5rem 1rem;
+  border: none; border-radius: 6px;
+  background: var(--accent); color: white;
+  cursor: pointer; font-size: 1rem;
 }
 .btn svg {
   width: 1.2rem; height: 1.2rem;
   stroke: #006064; stroke-width: 2; fill: none;
 }
 
-/* Calendario */
+/* —————————————————————— */
+/* 4) CALENDARIO           */
+/* —————————————————————— */
 #calendar-container { padding: 1rem; }
 table {
   width: 100%; border-collapse: collapse;
@@ -63,9 +95,7 @@ thead th {
   padding: .5rem 0;
   font-weight: bold;
 }
-.calendar-cell {
-  position: relative; height: 100px;
-}
+.calendar-cell { position: relative; height: 100px; }
 .calendar-cell div:first-child { font-weight: bold; }
 .calendar-cell.holiday > div:first-child { color: red; }
 .slots-container {
@@ -87,7 +117,9 @@ thead th {
   stroke: #006064; stroke-width: 2; fill: none;
 }
 
-/* Navigazione mese */
+/* —————————————————————— */
+/* 5) NAVIGAZIONE MESE     */
+/* —————————————————————— */
 .calendar-header {
   display: flex; justify-content: center; align-items: center;
   margin: 1rem 0;
@@ -105,7 +137,9 @@ thead th {
   stroke: #006064; stroke-width: 2; fill: none;
 }
 
-/* Modali */
+/* —————————————————————— */
+/* 6) MODALI GENERALI      */
+/* —————————————————————— */
 .modal {
   display: none; position: fixed;
   top:0; left:0; right:0; bottom:0;
@@ -117,84 +151,107 @@ thead th {
 .modal-content {
   position: relative; background: var(--card);
   border: 2px solid var(--accent); border-radius: 8px;
-  padding: 1.5rem; width:90%; max-width:500px;
+  padding: 1.5rem; width: 90%; max-width: 500px;
   max-height: none; overflow-y: visible;
 }
 .close-btn {
-  position: absolute; top:.5rem; right:.5rem;
-  background:none; border:none;
-  font-size:1.2rem; color:var(--text);
-  cursor:pointer;
+  position: absolute; top: .5rem; right: .5rem;
+  background: none; border: none;
+  font-size: 1.2rem; color: var(--text);
+  cursor: pointer;
 }
 
-/* Datepicker */
+/* —————————————————————— */
+/* 7) DATEPICKER           */
+/* —————————————————————— */
 .datepicker-group {
-  display:flex; gap:1rem; margin-bottom:1rem;
+  display: flex; gap: 1rem; margin-bottom: 1rem;
 }
 .datepicker-field {
-  flex:1; display:flex; flex-direction:column;
-  font-weight:bold; color:var(--text);
+  flex: 1; display: flex; flex-direction: column;
+  font-weight: bold; color: var(--text);
 }
 .datepicker-field input[type="date"] {
-  margin-top:.5rem; padding:.5rem;
-  border:var(--input-border); border-radius:8px;
+  margin-top: .5rem; padding: .5rem;
+  border: var(--input-border); border-radius: 8px;
 }
 
-/* Lista giorni */
-#weekday-list { margin-bottom:1rem; }
+/* —————————————————————— */
+/* 8) LISTA GIORNI         */
+/* —————————————————————— */
+#weekday-list { margin-bottom: 1rem; }
 .weekday-row {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:.4rem 0; border-top:1px solid var(--accent);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: .4rem 0; border-top: 1px solid var(--accent);
 }
-.weekday-row:first-child { border-top:none; }
-.weekday-row input[type="checkbox"] { margin-right:.5rem; }
-.weekday-row span { flex:1; text-align:center; }
+.weekday-row:first-child { border-top: none; }
+.weekday-row input[type="checkbox"] { margin-right: .5rem; }
+.weekday-row span { flex: 1; text-align: center; }
 
-/* Pillole orari selezionati */
+/* —————————————————————— */
+/* 9) PILLOLE ORARI        */
+/* —————————————————————— */
 .selected-times {
-  display:inline-flex; flex-wrap:wrap; gap:.25rem;
-  margin-left:.5rem;
+  display: inline-flex; flex-wrap: wrap; gap: .25rem;
+  margin-left: .5rem;
 }
 .selected-times span {
-  background:white; border:var(--input-border);
-  border-radius:6px; padding:4px 8px;
-  font-size:.8rem; display:inline-flex; align-items:center;
+  background: white; border: var(--input-border);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: .8rem; display: inline-flex; align-items: center;
 }
 .selected-times .remove-time {
-  margin-left:4px; background:none; border:none;
-  color:var(--accent); font-weight:bold; cursor:pointer;
+  margin-left: 4px; background: none; border: none;
+  color: var(--accent); font-weight: bold; cursor: pointer;
 }
 
-/* Tasto orologio */
+/* —————————————————————— */
+/*10) TASTI ORA            */
+/* —————————————————————— */
 .clock-btn {
-  background: var(--accent); border:none;
-  border-radius:4px; padding:.3rem; cursor:pointer;
+  background: var(--accent);
+  border: none; border-radius: 4px;
+  padding: .3rem; cursor: pointer;
 }
 
-/* Spinner loader */
+/* —————————————————————— */
+/*11) SPINNER / LOADER     */
+/* —————————————————————— */
 #loader {
-  display:none; position:fixed; top:0; left:0;
-  width:100%; height:100%; background:rgba(0,0,0,0.3);
-  justify-content:center; align-items:center; z-index:20;
+  display: none; position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.3);
+  justify-content: center; align-items: center;
+  z-index: 20;
 }
-#loader.active { display:flex; }
+#loader.active { display: flex; }
 .spinner {
-  width:50px; height:50px; border:6px solid var(--card);
-  border-top:6px solid var(--accent); border-radius:50%;
-  animation:spin 1s linear infinite;
+  width: 50px; height: 50px;
+  border: 6px solid var(--card);
+  border-top: 6px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
-@keyframes spin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
-/* Timepicker selects */
+/* —————————————————————— */
+/*12) TIMEPICKER SELECTS    */
+/* —————————————————————— */
 #hour-list select {
-  background:white; border:var(--input-border);
-  border-radius:6px; padding:4px 8px; margin:0 2px;
-  font-size:.9rem;
+  background: white;
+  border: var(--input-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0 2px;
+  font-size: .9rem;
 }
-/* Righe timepicker */
 .hour-row {
-  display:flex; align-items:center; gap:.5rem;
-  margin-bottom:.4rem;
+  display: flex; align-items: center;
+  gap: .5rem; margin-bottom: .4rem;
 }
-.hour-row input[type="checkbox"] { margin:0; }
-#select-all { transform: scale(1.2); margin-bottom:.5rem; }
+.hour-row input[type="checkbox"] { margin: 0; }
+#select-all { transform: scale(1.2); margin-bottom: .5rem; }
