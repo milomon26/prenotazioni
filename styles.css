@@ -8,8 +8,8 @@
   --text: #006064;
   --input-border: 2px solid var(--accent);
   --green: #a5d6a7;
-  --green-light: #d0f8ce;    /* verde evidenziatore più chiaro */
-  --link-color: #00796b;      /* colore “cute” per i link */
+  --green-light: #d0f8ce;
+  --link-color: #00796b;
 }
 
 /* RESET GLOBALE */
@@ -53,23 +53,27 @@ a:hover {
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-width: 400px;
 }
 .login-card h2 {
   margin-bottom: 1rem;
   color: var(--text);
 }
+/* I campi e il button in colonna */
 .login-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 1rem;
 }
 .login-row input {
-  flex: 1;
   padding: .5rem;
   border: var(--input-border);
   border-radius: 6px;
+  width: 100%;
 }
 .login-row button.btn {
+  align-self: flex-end;
   white-space: nowrap;
 }
 
@@ -127,7 +131,7 @@ thead th {
 }
 .calendar-cell {
   position: relative;
-  min-height: 180px;  /* fissa la cella per contenere 4 slot + link */
+  min-height: 180px;  /* spazio per 4 slot + link */
 }
 .calendar-cell div:first-child {
   font-weight: bold;
@@ -135,14 +139,13 @@ thead th {
 .calendar-cell.holiday > div:first-child {
   color: red;
 }
-/* contenitore slot con overflow nascosto */
+/* container slot e link */
 .slots-container {
   margin-top: 4px;
-  height: 140px;   /* spazio per 4 slot */
+  height: 140px;      /* spazio per 4 slot */
   overflow: hidden;
   position: relative;
 }
-/* link “Vedi altri” sempre in fondo */
 .more-container {
   position: absolute;
   bottom: 4px;
@@ -166,7 +169,6 @@ thead th {
 .btn-icon {
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
 }
 .btn-icon svg {
@@ -231,7 +233,7 @@ thead th {
   padding: 1.5rem;
   width: 90%;
   max-width: 500px;
-  max-height: 90vh;     /* rende il modal scrollabile se troppo alto */
+  max-height: 90vh;    /* scroll se troppo alto */
   overflow-y: auto;
 }
 .close-btn {
