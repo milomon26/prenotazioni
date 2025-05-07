@@ -1,4 +1,4 @@
-/* “Nunito” */
+/* Import font “Nunito” */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap');
 
 :root {
@@ -12,8 +12,8 @@
   --link-color: #00796b;
 }
 
-/* RESET */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* RESET BASE */
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: 'Nunito', sans-serif;
   background: var(--bg);
@@ -21,19 +21,54 @@ body {
   min-height: 100vh;
 }
 
-/* HEADER utente */
+/* HEADER CLIENTE */
 .header {
-  display: flex;
-  justify-content: flex-end;
   background: var(--card);
   padding: .5rem 1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 .admin-link {
-  font-size: .9rem;
+  background: var(--accent);
+  color: white;
   padding: .3rem .6rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: .9rem;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.admin-link:hover { opacity:.8; }
+
+/* MODALI GENERALI */
+.modal {
+  display: none;
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,.4);
+  justify-content: center;
+  align-items: center;
+  z-index:10;
+}
+.modal.active { display:flex; }
+.modal-content {
+  position: relative;
+  background: var(--card);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+}
+.close-btn {
+  position: absolute;
+  top: .5rem; right: .5rem;
+  background: none; border: none;
+  font-size: 1.2rem; color: var(--text);
+  cursor: pointer;
 }
 
-/* PULSANTI GENERALI compatti */
+/* PULSANTI BASE compatti */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -43,21 +78,17 @@ body {
   color: white;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
   padding: .3rem .6rem;
+  font-weight: 600;
   font-size: .9rem;
+  cursor: pointer;
   transition: opacity .2s;
 }
-.btn:hover {
-  opacity: .8;
-}
+.btn:hover { opacity:.8; }
 
 /* NAV MESE circolari */
 .btn-nav {
-  width: 28px;
-  height: 28px;
-  padding: 0;
+  width: 28px; height: 28px;
   background: var(--accent);
   color: white;
   border: none;
@@ -67,10 +98,9 @@ body {
   justify-content: center;
   font-size: 1.1rem;
   cursor: pointer;
+  transition: opacity .2s;
 }
-.btn-nav:hover {
-  opacity: .8;
-}
+.btn-nav:hover { opacity:.8; }
 
 /* CALENDARIO */
 #calendar-container {
@@ -129,24 +159,13 @@ thead th {
 .slot.booked {
   background: var(--red-light);
 }
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-/* “VEDI ALTRI” */
-.more-container {
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  width: 100%;
+.more-link {
+  display: block;
   text-align: center;
-}
-.more-container a {
   color: var(--link-color);
   font-size: .8rem;
   cursor: pointer;
+  margin-top: 2px;
 }
 
 /* HEADER MESE */
@@ -159,38 +178,6 @@ thead th {
 .calendar-header h2 {
   margin: 0 .5rem;
   text-transform: capitalize;
-}
-
-/* MODALI */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,.4);
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-}
-.modal.active {
-  display: flex;
-}
-.modal-content {
-  position: relative;
-  background: var(--card);
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  padding: 1.5rem;
-  width: 90%;
-  max-width: 400px;
-}
-.close-btn {
-  position: absolute;
-  top: .5rem; right: .5rem;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: var(--text);
-  cursor: pointer;
 }
 
 /* BOOKING FORM */
@@ -215,25 +202,22 @@ thead th {
 #loader {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top:0; left:0;
+  width:100%; height:100%;
   background: rgba(0,0,0,.3);
-  justify-content: center;
-  align-items: center;
-  z-index: 20;
+  justify-content:center;
+  align-items:center;
+  z-index:20;
 }
-#loader.active {
-  display: flex;
-}
+#loader.active { display:flex; }
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 5px solid var(--card);
-  border-top: 5px solid var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  width:40px; height:40px;
+  border:5px solid var(--card);
+  border-top:5px solid var(--accent);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
 }
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
 }
