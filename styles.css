@@ -3,7 +3,7 @@
 body { background:#e0f7fa; color:#006064; font-family:'Poppins',sans-serif }
 
 /* Utilità */
-.hide { display: none !important }
+.hide { display:none !important }
 
 /* Header */
 .header { background:#80deea; padding:10px; display:flex; justify-content:flex-end; gap:10px }
