@@ -136,6 +136,6 @@ td.calendar-cell.holiday .day-number { color:#d32f2f }
 }
 
 /* Timepicker */
-.hour-list { display:flex; flex-direction:column; gap:4px; margin-bottom:20px }
+.hour-list { display:flex; flex-direction:column; gap:4px margin-bottom:20px }
 .hour-row { display:flex; align-items:center; gap:10px }
 .hour-row span { flex:1 }
