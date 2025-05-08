@@ -9,26 +9,19 @@
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <!-- Topbar -->
   <header class="header">
     <button id="admin-btn" class="btn">Area Admin</button>
   </header>
-
-  <!-- Calendario -->
   <main>
     <div id="calendar-container"></div>
   </main>
-
-  <!-- Loader -->
   <div id="loader"><div class="spinner"></div></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs, onSnapshot
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-    // Inizializza Firebase
     initializeApp({
       apiKey:            "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain:        "prenotazioni-app-87467.firebaseapp.com",
@@ -39,7 +32,6 @@
     });
     const db = getFirestore();
 
-    // Calcola Pasqua e festività italiane
     function calculateEaster(Y) {
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,
@@ -69,58 +61,53 @@
       ];
     }
 
-    let currentMonth = new Date();
+    let currentMonth=new Date();
 
-    // Render del calendario (solo slot liberi e visibili)
     async function renderCalendar(d0) {
       currentMonth = d0;
-      const Y     = d0.getFullYear(),
-            M     = d0.getMonth(),
-            dim   = new Date(Y, M+1, 0).getDate(),
-            first = (new Date(Y, M, 1).getDay() + 6) % 7,
-            rows  = Math.ceil((first + dim) / 7),
-            hols  = getHolidays(Y),
-            wds   = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const Y = d0.getFullYear(), M = d0.getMonth(),
+            dim = new Date(Y, M+1, 0).getDate(),
+            first = (new Date(Y, M, 1).getDay()+6)%7,
+            rows = Math.ceil((first+dim)/7),
+            hols = getHolidays(Y),
+            wds = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       const cont = document.getElementById('calendar-container');
       cont.innerHTML = '';
 
-      // Header mese
       const nav = document.createElement('div');
       nav.className = 'calendar-header';
       let mName = d0.toLocaleString('it-IT',{month:'long'});
-      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
+      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
       nav.append(
-        createNav('‹', ()=>renderCalendar(new Date(Y, M-1, 1))),
-        Object.assign(document.createElement('h2'),{ textContent:`${mName} ${Y}` }),
-        createNav('›', ()=>renderCalendar(new Date(Y, M+1, 1)))
+        createNav('‹', ()=>renderCalendar(new Date(Y,M-1,1))),
+        Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
+        createNav('›', ()=>renderCalendar(new Date(Y,M+1,1)))
       );
       cont.append(nav);
 
-      // Tabella
-      const tbl   = document.createElement('table'),
-            thead = tbl.createTHead(),
-            hr    = thead.insertRow(),
+      const tbl = document.createElement('table'),
+            thead = tbl.createTHead(), trh = thead.insertRow(),
             tbody = tbl.createTBody();
       wds.forEach(d=>{
         const th = document.createElement('th');
         th.textContent = d;
-        hr.append(th);
+        trh.append(th);
       });
 
-      let day = 1;
-      for(let r=0; r<rows; r++){
+      let day=1;
+      for(let r=0;r<rows;r++){
         const tr = tbody.insertRow();
-        for(let i=0; i<7; i++){
-          const td = tr.insertCell(), idx = r*7 + i;
-          if(idx < first || day > dim){
-            td.innerHTML = '';
+        for(let i=0;i<7;i++){
+          const td = tr.insertCell(), idx=r*7+i;
+          if(idx<first||day>dim){
+            td.innerHTML='';
           } else {
-            const dd  = String(day).padStart(2,'0'),
-                  iso = `${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
-            td.className    = 'calendar-cell';
-            td.dataset.date = iso;
-            if(i===6 || hols.includes(iso)) td.classList.add('holiday');
+            const dd=String(day).padStart(2,'0'),
+                  iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
+            td.className='calendar-cell';
+            td.dataset.date=iso;
+            if(i===6||hols.includes(iso)) td.classList.add('holiday');
             td.innerHTML = `<div class="day-number">${dd}</div><div class="slots-container"></div>`;
             day++;
           }
@@ -128,50 +115,44 @@
       }
       cont.append(tbl);
 
-      // Carica tutti gli slot
-      const snap   = await getDocs(collection(db,'slots')),
-            byDate = {};
+      const snap = await getDocs(collection(db,'slots')),
+            byDate={};
       snap.forEach(ds=>{
-        const s = ds.data();
+        const s=ds.data();
         if(s.libero && s.visibile){
-          (byDate[s.date] ||= []).push(s);
+          (byDate[s.date]||=[]).push(s);
         }
       });
 
-      // Popola le celle
       document.querySelectorAll('.calendar-cell').forEach(cell=>{
-        const date = cell.dataset.date,
-              sc   = cell.querySelector('.slots-container'),
-              arr  = (byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
+        const date=cell.dataset.date,
+              sc=cell.querySelector('.slots-container'),
+              arr=(byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
         arr.slice(0,4).forEach(s=>{
-          const span = document.createElement('span');
-          span.className = 'slot-time';
-          span.textContent = s.time;
+          const span=document.createElement('span');
+          span.className='slot-time';
+          span.textContent=s.time;
           sc.append(span);
         });
         if(arr.length>4){
-          const cnt  = arr.length-4,
-                link = document.createElement('a');
-          link.href      = '#';
-          link.className = 'more-link';
-          link.textContent = `Vedi altri ${cnt} slot`;
+          const cnt=arr.length-4, link=document.createElement('a');
+          link.href='#'; link.className='more-link';
+          link.textContent=`Vedi altri ${cnt} slot`;
           sc.append(link);
         }
       });
     }
 
     function createNav(txt,fn){
-      const b = document.createElement('button');
-      b.className = 'btn-nav';
-      b.textContent = txt;
-      b.onclick = fn;
+      const b=document.createElement('button');
+      b.className='btn-nav'; b.textContent=txt; b.onclick=fn;
       return b;
     }
 
-    window.addEventListener('DOMContentLoaded', ()=>{
+    window.addEventListener('DOMContentLoaded',()=>{
       renderCalendar(currentMonth);
-      onSnapshot(collection(db,'slots'), ()=>renderCalendar(currentMonth));
-      document.getElementById('admin-btn').onclick = ()=>location.href='admin.html';
+      onSnapshot(collection(db,'slots'),()=>renderCalendar(currentMonth));
+      document.getElementById('admin-btn').onclick=()=>location.href='admin.html';
     });
   </script>
 </body>
