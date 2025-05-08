@@ -88,23 +88,29 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Config & Init
-    const cfg = {
+    // init Firebase
+    firebase.initializeApp({
       apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain: "prenotazioni-app-87467.firebaseapp.com",
       projectId: "prenotazioni-app-87467",
       storageBucket: "prenotazioni-app-87467.appspot.com",
       messagingSenderId: "322391103742",
       appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
-    };
-    firebase.initializeApp(cfg);
+    });
     const db = firebase.firestore();
 
-    // Pasqua & festività
-    function calculateEaster(Y){ /*...*/ }
-    function getHolidays(Y){ /*...*/ }
+    // Pasqua & festività (stessa di sopra)
+    function calculateEaster(Y){ /* ... */ }
+    function getHolidays(date){
+      const Y=date.getFullYear(), pad=n=>String(n).padStart(2,'0'),
+            eas=calculateEaster(Y), em=eas.getMonth()+1, ed=eas.getDate(),
+            pas=`${Y}-${pad(em)}-${pad(ed)}`, ang=new Date(eas);
+      ang.setDate(ed+1);
+      const am=ang.getMonth()+1, ad=ang.getDate(), pasq=`${Y}-${pad(am)}-${pad(ad)}`;
+      return [`${Y}-01-01`,`${Y}-01-06`,pas,pasq,`${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,`${Y}-06-29`,`${Y}-08-15`,`${Y}-11-01`,`${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`];
+    }
 
-    let currentMonth=new Date(), wizardCtx=null, infoId=null;
+    let currentMonth = new Date(), wizardCtx=null, infoId=null;
 
     async function renderCalendar(d0){
       currentMonth=d0;
@@ -112,13 +118,14 @@
             dim=new Date(Y,M+1,0).getDate(),
             first=(new Date(Y,M,1).getDay()+6)%7,
             rows=Math.ceil((first+dim)/7),
-            hols=getHolidays(Y),
+            hols=getHolidays(d0),
             wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       document.getElementById('loader').classList.add('active');
       const cont=document.getElementById('calendar-container');
       cont.innerHTML='';
 
+      // header mese
       const nav=document.createElement('div');
       nav.className='calendar-header';
       let mName=d0.toLocaleString('it-IT',{month:'long'});
@@ -130,35 +137,33 @@
       );
       cont.append(nav);
 
-      const tbl=cont.appendChild(document.createElement('table')),
-            thead=tbl.createTHead().insertRow(),
+      // tabella
+      const tbl=document.createElement('table'),
+            thead=tbl.createTHead(),
+            trh=thead.insertRow(),
             tbody=tbl.createTBody();
-      wds.forEach(d=>{const th=document.createElement('th');th.textContent=d;thead.append(th)});
+      wds.forEach(d=>{const th=document.createElement('th'); th.textContent=d; trh.append(th);});
       let day=1;
       for(let r=0;r<rows;r++){
         const tr=tbody.insertRow();
         for(let i=0;i<7;i++){
           const td=tr.insertCell(), idx=r*7+i;
-          if(idx<first||day>dim){td.innerHTML=''} else {
+          if(idx<first||day>dim) td.innerHTML='';
+          else {
             const dd=String(day).padStart(2,'0'),
                   iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
             td.className='calendar-cell'; td.dataset.date=iso;
             if(i===6||hols.includes(iso)) td.classList.add('holiday');
-            td.innerHTML=`
-              <div class="day-number">${dd}</div>
-              <div class="slots-container"></div>
-              <div class="more-container"></div>
-            `;
+            td.innerHTML=`<div class="day-number">${dd}</div><div class="slots-container"></div><div class="more-container"></div>`;
             day++;
           }
         }
       }
+      cont.append(tbl);
 
+      // carica slot
       const snap=await db.collection('slots').get(), byDate={};
-      snap.forEach(ds=>{
-        const s=ds.data();
-        (byDate[s.date]||=[]).push({id:ds.id,...s});
-      });
+      snap.forEach(ds=>{const s=ds.data(); (byDate[s.date]||=[]).push({id:ds.id,...s});});
 
       document.querySelectorAll('.calendar-cell').forEach(cell=>{
         const date=cell.dataset.date,
@@ -167,17 +172,14 @@
         arr.slice(0,4).forEach(s=>{
           const div=document.createElement('div');
           div.className='slot-time';
-          div.innerHTML=`
-            <span>${s.time}</span>
-            <button class="trash-btn" onclick="deleteSlot('${s.id}',event)">×</button>
-          `;
+          div.innerHTML=`<span>${s.time}</span><button class="trash-btn" onclick="deleteSlot('${s.id}',event)">×</button>`;
           sc.append(div);
         });
         if(arr.length>4){
           const link=document.createElement('a');
           link.href='#'; link.className='more-link';
           link.textContent=`Vedi altri ${arr.length-4} slot`;
-          link.onclick=e=>{e.preventDefault(); openMoreModal(date)};
+          link.onclick=e=>{e.preventDefault(); openMoreModal(date);};
           cell.querySelector('.more-container').append(link);
         }
       });
@@ -191,12 +193,8 @@
       return b;
     }
 
-    // Delete slot + confirm
-    window.deleteSlot=(id,e)=>{
-      e.stopPropagation();
-      window.pendingId=id;
-      document.getElementById('confirm-modal').classList.add('active');
-    };
+    // deleteSlot + confirm
+    window.deleteSlot=(id,e)=>{e.stopPropagation();window.pendingId=id;document.getElementById('confirm-modal').classList.add('active');};
     document.getElementById('confirm-yes').onclick=async()=>{
       await db.collection('slots').doc(window.pendingId).delete();
       document.getElementById('confirm-modal').classList.remove('active');
@@ -205,11 +203,9 @@
     document.getElementById('confirm-no').onclick=()=>{
       document.getElementById('confirm-modal').classList.remove('active');
     };
-    document.querySelectorAll('#confirm-modal .close-btn').forEach(b=>{
-      b.onclick=()=>b.closest('.modal').classList.remove('active');
-    });
+    document.querySelectorAll('#confirm-modal .close-btn').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
-    // More Modal
+    // more-modal
     function openMoreModal(date){
       const ml=document.getElementById('more-list');
       ml.innerHTML='';
@@ -218,18 +214,13 @@
           const s=ds.data();
           const div=document.createElement('div');
           div.className='slot-time';
-          div.innerHTML=`
-            <span>${s.time}</span>
-            <button class="trash-btn" onclick="deleteSlot('${ds.id}',event)">×</button>
-          `;
+          div.innerHTML=`<span>${s.time}</span><button class="trash-btn" onclick="deleteSlot('${ds.id}',event)">×</button>`;
           ml.append(div);
         });
         document.getElementById('more-modal').classList.add('active');
       });
     }
-    document.querySelectorAll('#more-modal .close-btn').forEach(b=>{
-      b.onclick=()=>b.closest('.modal').classList.remove('active');
-    });
+    document.querySelectorAll('#more-modal .close-btn').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('active'));
 
     // Wizard & Timepicker
     function attachWizardLogic(){
@@ -250,11 +241,10 @@
           .forEach(d=>{
             const row=document.createElement('div');
             row.className='weekday-row';
-            row.innerHTML=`
-              <input type="checkbox" data-day="${d}">
-              <span class="weekday-name">${d}</span>
-              <button class="clock-btn" data-day="${d}">🕒</button>
-            `;
+            row.innerHTML=
+              `<input type="checkbox" data-day="${d}"/>
+               <span class="weekday-name">${d}</span>
+               <button class="clock-btn" data-day="${d}">🕒</button>`;
             wl.append(row);
           });
         wm.classList.add('active');
@@ -263,17 +253,13 @@
 
       wl.addEventListener('click',e=>{
         if(e.target.classList.contains('clock-btn')){
-          const giorno=e.target.dataset.day;
-          window.wizardCtx={giorno};
+          wizardCtx={ giorno: e.target.dataset.day };
           hl.innerHTML='';
           for(let h=7;h<=20;h++){
             const hr=`${String(h).padStart(2,'0')}:00`;
             const div=document.createElement('div');
             div.className='hour-row';
-            div.innerHTML=`
-              <input type="checkbox" data-hour="${hr}">
-              <span>${hr}</span>
-            `;
+            div.innerHTML=`<input type="checkbox" data-hour="${hr}"/><span>${hr}</span>`;
             hl.append(div);
           }
           sa.checked=false;
@@ -286,42 +272,40 @@
 
       ts.onclick=()=>{
         const scelti=Array.from(hl.querySelectorAll('input:checked'))
-          .map(cb=>cb.dataset.hour);
-        const row=wl.querySelector(`button[data-day="${window.wizardCtx.giorno}"]`)
-          .closest('.weekday-row');
+                         .map(cb=>cb.dataset.hour);
+        const row=wl.querySelector(`button[data-day="${wizardCtx.giorno}"]`)
+                    .closest('.weekday-row');
         row.querySelector('.time-summary')?.remove();
         const cont=document.createElement('div');
         cont.className='time-summary';
         scelti.forEach(hour=>{
-          const pill=document.createElement('span'); pill.className='time-pill';
-          pill.textContent=hour;
-          const del=document.createElement('button'); del.className='pill-delete'; del.textContent='×';
-          del.onclick=()=>pill.remove();
+          const pill=document.createElement('span');
+          pill.className='time-pill'; pill.textContent=hour;
+          const del=document.createElement('button');
+          del.className='pill-delete'; del.textContent='×'; del.onclick=()=>pill.remove();
           pill.append(del);
           cont.append(pill);
         });
         row.append(cont);
-        if(scelti.length) row.querySelector('input').checked=true;
+        if(scelti.length) row.querySelector('input').checked = true;
         tp.classList.remove('active');
       };
 
       ws.onclick=async()=>{
         if(!sd.value||!ed.value){ alert('Date obbligatorie'); return; }
-        const selDays=Array.from(wl.querySelectorAll('input[type="checkbox"]:checked'))
+        const selDays=Array.from(wl.querySelectorAll('input:checked'))
           .map(cb=>cb.dataset.day);
         const timesMap={};
         wl.querySelectorAll('.weekday-row').forEach(r=>{
-          const d=r.querySelector('input').dataset.day,
-                pills=r.querySelectorAll('.time-pill');
+          const d=r.querySelector('input').dataset.day;
+          const pills=r.querySelectorAll('.time-pill');
           if(pills.length) timesMap[d]=Array.from(pills).map(p=>p.textContent);
         });
-
         const snapExist=await db.collection('slots').get(), exist={};
         snapExist.forEach(ds=>{
           const o=ds.data();
           exist[`${o.date}|${o.time}`]=true;
         });
-
         let cur=new Date(sd.value), end=new Date(ed.value);
         while(cur<=end){
           const iso=cur.toISOString().slice(0,10),
@@ -330,9 +314,9 @@
             for(const t of (timesMap[wd]||[])){
               if(!exist[`${iso}|${t}`]){
                 await db.collection('slots').add({
-                  date:iso, time:t,
-                  nome:'', telefono:'',
-                  libero:true, visibile:true, dove:''
+                  date:iso,time:t,
+                  nome:'',telefono:'',
+                  libero:true,visibile:true,dove:''
                 });
               }
             }
@@ -351,11 +335,11 @@
       });
       document.getElementById('info-save').onclick=async()=>{
         await db.collection('slots').doc(infoId).update({
-          libero:document.getElementById('info-libero').checked,
-          visibile:document.getElementById('info-visibile').checked,
-          nome:document.getElementById('info-nome').value.trim(),
-          telefono:document.getElementById('info-telefono').value.trim(),
-          dove:document.getElementById('info-dove').value.trim()
+          libero:   document.getElementById('info-libero').checked,
+          visibile: document.getElementById('info-visibile').checked,
+          nome:     document.getElementById('info-nome').value.trim(),
+          telefono: document.getElementById('info-telefono').value.trim(),
+          dove:     document.getElementById('info-dove').value.trim()
         });
         document.getElementById('slot-info-modal').classList.remove('active');
         renderCalendar(currentMonth);
@@ -363,24 +347,23 @@
       window.openInfoModal=async id=>{
         infoId=id;
         const ds=await db.collection('slots').doc(id).get(), s=ds.data();
-        document.getElementById('info-date').value=s.date;
-        document.getElementById('info-time').value=s.time;
-        document.getElementById('info-libero').checked=s.libero;
-        document.getElementById('info-visibile').checked=s.visibile;
-        document.getElementById('info-nome').value=s.nome;
-        document.getElementById('info-telefono').value=s.telefono;
-        document.getElementById('info-dove').value=s.dove;
+        document.getElementById('info-date').value     = s.date;
+        document.getElementById('info-time').value     = s.time;
+        document.getElementById('info-libero').checked = s.libero;
+        document.getElementById('info-visibile').checked = s.visibile;
+        document.getElementById('info-nome').value     = s.nome;
+        document.getElementById('info-telefono').value = s.telefono;
+        document.getElementById('info-dove').value     = s.dove;
         document.getElementById('slot-info-modal').classList.add('active');
       };
     }
 
-    // Avvio
+    // avvio
     window.addEventListener('DOMContentLoaded',()=>{
       renderCalendar(currentMonth);
       attachWizardLogic();
       setupSlotInfoModal();
-      firebase.firestore().collection('slots')
-        .onSnapshot(()=>renderCalendar(currentMonth));
+      db.collection('slots').onSnapshot(()=>renderCalendar(currentMonth));
       document.getElementById('logout-btn').onclick = ()=>location.href='index.html';
     });
   </script>
