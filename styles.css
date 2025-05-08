@@ -3,7 +3,7 @@
 body { background:#e0f7fa; color:#006064; font-family:'Poppins',sans-serif }
 
 /* Header */
-.header { background:#80deea; padding:10px; display:flex; justify-content:flex-end; gap:10px }
+.header { background:#80deea; padding:10px; display:flex; justify-content:flex-end }
 .btn { background:#4dd0e1; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-size:1rem }
 .btn:hover { background:#26c6da }
 
@@ -12,49 +12,17 @@ body { background:#e0f7fa; color:#006064; font-family:'Poppins',sans-serif }
 table { width:100%; border-collapse:collapse }
 th, td { border:1px solid #4dd0e1; padding:10px; text-align:center; vertical-align:top; min-height:80px }
 th { background:#80deea }
-td.calendar-cell.holiday > div:first-child { color:#d32f2f }
+.day-number { font-weight:600 }
+td.calendar-cell.holiday > .day-number { color:#d32f2f }
 .slots-container { display:flex; flex-direction:column; gap:4px; margin-top:5px }
-.slot { display:flex; align-items:center; gap:8px; background:#c8e6c9; padding:4px 8px; border-radius:4px }
-.slot.booked { background:#ffcdd2 }
-.more-link { color:#006064; text-decoration:none; font-weight:bold }
+.slot-time { background:#c8e6c9; border-radius:4px; padding:4px 8px; margin-bottom:4px }
+.more-link { color:#6a1b9a; text-decoration:none; font-weight:bold }
 .more-link:hover { text-decoration:underline }
 
-/* Modal base */
-.modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3);
-         display:flex; align-items:center; justify-content:center;
-         opacity:0; pointer-events:none; transition:opacity .2s }
-.modal.active { opacity:1; pointer-events:auto }
-.modal-content { background:#80deea; padding:20px; border-radius:8px;
-                 width:90%; max-width:500px; max-height:90%; overflow-y:auto; position:relative }
-.close-btn { position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.2rem; cursor:pointer }
-
-/* Wizard */
-.wizard-datepicker { display:flex; gap:20px; margin-bottom:20px }
-.datepicker-field label { display:block; margin-bottom:5px }
-.datepicker-field input { width:160px; padding:8px; border:2px solid #4dd0e1; border-radius:4px }
-
-/* Giorni del wizard in riga */
-.weekday-list { display:flex; flex-direction:column; gap:12px; margin-bottom:20px }
-.weekday-row { display:flex; align-items:center; gap:12px }
-.weekday-row input[type="checkbox"] { margin:0 }
-.weekday-row .weekday-name { flex:none; font-weight:600 }
-.clock-btn { background:#4dd0e1; border:none; padding:8px; border-radius:4px; cursor:pointer }
-
-/* Pillole bianche per i tempi (non più usate nel wizard) */
-.time-summary { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px }
-/* (nel wizard non ci servono pillole bianche, perché eliminiamo subito la scrollbar) */
-
-/* Timepicker: tutti visibili */
-.hour-list { display:flex; flex-direction:column; gap:4px; margin:10px 0 }
-.hour-row { display:flex; align-items:center; gap:10px }
-
-/* Pulsanti nav/icon */
+/* Navigation buttons */
 .btn-nav { background:#4dd0e1; border:none; border-radius:50%; width:32px; height:32px; cursor:pointer }
 .btn-nav:hover { background:#26c6da }
-.btn-icon { background:none; border:none; cursor:pointer; font-size:1.2rem }
-.btn-icon.trash:hover { color:#d32f2f }
 
 /* Loader */
-.spinner { border:4px solid #ccc; border-top:4px solid #006064; border-radius:50%;
-            width:40px; height:40px; animation:spin 1s linear infinite; margin:auto }
+.spinner { border:4px solid #ccc; border-top:4px solid #006064; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:auto }
 @keyframes spin { to{transform:rotate(360deg)} }
