@@ -1,27 +1,40 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin Login</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Calendario Utente</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <div class="login-container">
-    <div class="login-card">
-      <h2>Accedi</h2>
-      <input type="text" id="username" placeholder="Username">
-      <input type="password" id="password" placeholder="Password">
-      <button id="login-btn" class="btn">Accedi</button>
+
+  <header class="header">
+    <button id="login-btn" class="btn">Login Admin</button>
+  </header>
+
+  <main>
+    <div id="calendar-container"></div>
+  </main>
+
+  <div id="loader"><div class="spinner"></div></div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn">&times;</button>
+      <h3>Admin Login</h3>
+      <input type="text" id="username" placeholder="Username"/><br/><br/>
+      <input type="password" id="password" placeholder="Password"/><br/><br/>
+      <button id="do-login" class="btn">Accedi</button>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Config Firebase
-    const firebaseConfig = {
+    // Config & Init
+    const cfg = {
       apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain: "prenotazioni-app-87467.firebaseapp.com",
       projectId: "prenotazioni-app-87467",
@@ -29,26 +42,146 @@
       messagingSenderId: "322391103742",
       appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
     };
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(cfg);
     const db = firebase.firestore();
 
-    document
-      .getElementById('login-btn')
-      .addEventListener('click', async () => {
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value.trim();
-        if (!u || !p) { alert('Compila entrambi i campi'); return; }
-        const q = await db
-          .collection('users')
-          .where('username','==',u)
-          .where('password','==',p)
-          .get();
-        if (!q.empty) {
-          window.location = 'calendar.html';
-        } else {
-          alert('Credenziali errate');
+    // Calcola Pasqua & festività
+    function calculateEaster(Y){ /* ...stessa funzione precedente... */ }
+    function getHolidays(Y){
+      const pad=n=>String(n).padStart(2,'0'),
+            eas=calculateEaster(Y), em=eas.getMonth()+1, ed=eas.getDate(),
+            pas=`${Y}-${pad(em)}-${pad(ed)}`,
+            ang=new Date(eas); ang.setDate(ed+1);
+      const am=ang.getMonth()+1, ad=ang.getDate(),
+            pasq=`${Y}-${pad(am)}-${pad(ad)}`;
+      return [
+        `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
+        `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,`${Y}-06-29`,
+        `${Y}-08-15`,`${Y}-11-01`,`${Y}-12-08`,`${Y}-12-25`,`${Y}-12-26`
+      ];
+    }
+
+    let currentMonth=new Date();
+
+    async function renderCalendar(d0){
+      currentMonth=d0;
+      const Y=d0.getFullYear(), M=d0.getMonth(),
+            dim=new Date(Y,M+1,0).getDate(),
+            first=(new Date(Y,M,1).getDay()+6)%7,
+            rows=Math.ceil((first+dim)/7),
+            hols=getHolidays(Y),
+            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+      document.getElementById('loader').classList.add('active');
+      const cont=document.getElementById('calendar-container');
+      cont.innerHTML='';
+
+      // Header mese
+      const nav=document.createElement('div');
+      nav.className='calendar-header';
+      let mName=d0.toLocaleString('it-IT',{month:'long'});
+      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
+      nav.append(
+        createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
+        Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
+        createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
+      );
+      cont.append(nav);
+
+      // Tabella
+      const tbl=cont.appendChild(document.createElement('table')),
+            thead=tbl.createTHead().insertRow(),
+            tbody=tbl.createTBody();
+      wds.forEach(d=>{
+        const th=document.createElement('th');
+        th.textContent=d;
+        thead.append(th);
+      });
+
+      let day=1;
+      for(let r=0;r<rows;r++){
+        const tr=tbody.insertRow();
+        for(let i=0;i<7;i++){
+          const td=tr.insertCell(), idx=r*7+i;
+          if(idx<first||day>dim){
+            td.innerHTML='';
+          } else {
+            const dd=String(day).padStart(2,'0'),
+                  iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
+            td.className='calendar-cell'; td.dataset.date=iso;
+            if(i===6||hols.includes(iso)) td.classList.add('holiday');
+            td.innerHTML=`
+              <div class="day-number">${dd}</div>
+              <div class="slots-container"></div>
+              <div class="more-container"></div>
+            `;
+            day++;
+          }
+        }
+      }
+
+      // Slot utente (libero && visibile)
+      const snap=await db.collection('slots').get(),
+            byDate={};
+      snap.forEach(ds=>{
+        const s=ds.data();
+        if(s.libero&&s.visibile) (byDate[s.date]||=[]).push(s);
+      });
+
+      document.querySelectorAll('.calendar-cell').forEach(cell=>{
+        const date=cell.dataset.date,
+              sc=cell.querySelector('.slots-container'),
+              arr=(byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
+        arr.slice(0,4).forEach(s=>{
+          const sp=document.createElement('span');
+          sp.className='slot-time'; sp.textContent=s.time;
+          sc.append(sp);
+        });
+        if(arr.length>4){
+          const link=document.createElement('a');
+          link.href='#'; link.className='more-link';
+          link.textContent=`Vedi altri ${arr.length-4} slot`;
+          sc.append(link);
         }
       });
+
+      document.getElementById('loader').classList.remove('active');
+    }
+
+    function createNav(txt,fn){
+      const b=document.createElement('button');
+      b.className='btn-nav'; b.textContent=txt; b.onclick=fn;
+      return b;
+    }
+
+    // Login modal logic
+    document.getElementById('login-btn').onclick = ()=>{
+      document.getElementById('login-modal').classList.add('active');
+    };
+    document.querySelectorAll('#login-modal .close-btn').forEach(b=>{
+      b.onclick = ()=>b.closest('.modal').classList.remove('active');
+    });
+    document.getElementById('do-login').onclick = async ()=>{
+      const u=document.getElementById('username').value.trim(),
+            p=document.getElementById('password').value.trim();
+      if(!u||!p){ alert('Inserisci credenziali'); return; }
+      const q=await db.collection('users')
+        .where('username','==',u)
+        .where('password','==',p)
+        .get();
+      if(!q.empty){
+        window.location='admin.html';
+      } else {
+        alert('Credenziali errate');
+      }
+    };
+
+    // Avvio
+    window.addEventListener('DOMContentLoaded',()=>{
+      renderCalendar(currentMonth);
+      firebase.firestore().collection('slots')
+        .onSnapshot(()=>renderCalendar(currentMonth));
+    });
   </script>
 </body>
 </html>
