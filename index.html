@@ -33,7 +33,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Config & Init
+    // 1) init Firebase
     const cfg = {
       apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain: "prenotazioni-app-87467.firebaseapp.com",
@@ -45,15 +45,29 @@
     firebase.initializeApp(cfg);
     const db = firebase.firestore();
 
-    // Calcola Pasqua & festività
-    function calculateEaster(Y){ /* ...stessa funzione precedente... */ }
-    function getHolidays(Y){
-      const pad=n=>String(n).padStart(2,'0'),
-            eas=calculateEaster(Y), em=eas.getMonth()+1, ed=eas.getDate(),
-            pas=`${Y}-${pad(em)}-${pad(ed)}`,
-            ang=new Date(eas); ang.setDate(ed+1);
-      const am=ang.getMonth()+1, ad=ang.getDate(),
-            pasq=`${Y}-${pad(am)}-${pad(ad)}`;
+    // 2) Pasqua & festività (accetta Date)
+    function calculateEaster(Y){
+      const a=Y%19,b=Math.floor(Y/100),c=Y%100,
+            d=Math.floor(b/4),e=b%4,
+            f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+            h=(19*a+b-d-g+15)%30,
+            i=Math.floor(c/4),k=c%4,
+            L=(32+2*e+2*i-h-k)%7,
+            m=Math.floor((a+11*h+22*L)/451),
+            month=Math.floor((h+L-7*m+114)/31),
+            day=((h+L-7*m+114)%31)+1;
+      return new Date(Y,month-1,day);
+    }
+    function getHolidays(date){
+      const Y = date.getFullYear(),
+            pad = n=>String(n).padStart(2,'0'),
+            eas = calculateEaster(Y),
+            em = eas.getMonth()+1, ed = eas.getDate(),
+            pas = `${Y}-${pad(em)}-${pad(ed)}`,
+            ang = new Date(eas);
+      ang.setDate(ed+1);
+      const am = ang.getMonth()+1, ad = ang.getDate(),
+            pasq = `${Y}-${pad(am)}-${pad(ad)}`;
       return [
         `${Y}-01-01`,`${Y}-01-06`,pas,pasq,
         `${Y}-04-25`,`${Y}-05-01`,`${Y}-06-02`,`${Y}-06-29`,
@@ -61,53 +75,55 @@
       ];
     }
 
-    let currentMonth=new Date();
+    let currentMonth = new Date();
 
+    // 3) renderCalendar utente
     async function renderCalendar(d0){
-      currentMonth=d0;
-      const Y=d0.getFullYear(), M=d0.getMonth(),
-            dim=new Date(Y,M+1,0).getDate(),
-            first=(new Date(Y,M,1).getDay()+6)%7,
-            rows=Math.ceil((first+dim)/7),
-            hols=getHolidays(Y),
-            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      currentMonth = d0;
+      const Y = d0.getFullYear(), M = d0.getMonth(),
+            dim = new Date(Y,M+1,0).getDate(),
+            first = (new Date(Y,M,1).getDay()+6)%7,
+            rows = Math.ceil((first+dim)/7),
+            hols = getHolidays(d0),
+            wds = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       document.getElementById('loader').classList.add('active');
-      const cont=document.getElementById('calendar-container');
-      cont.innerHTML='';
+      const cont = document.getElementById('calendar-container');
+      cont.innerHTML = '';
 
-      // Header mese
-      const nav=document.createElement('div');
-      nav.className='calendar-header';
-      let mName=d0.toLocaleString('it-IT',{month:'long'});
-      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
+      // header mese
+      const nav = document.createElement('div');
+      nav.className = 'calendar-header';
+      let mName = d0.toLocaleString('it-IT',{month:'long'});
+      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
       nav.append(
-        createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
+        createNav('‹', ()=>renderCalendar(new Date(Y,M-1,1))),
         Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
-        createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
+        createNav('›', ()=>renderCalendar(new Date(Y,M+1,1)))
       );
       cont.append(nav);
 
-      // Tabella
-      const tbl=cont.appendChild(document.createElement('table')),
-            thead=tbl.createTHead().insertRow(),
-            tbody=tbl.createTBody();
+      // tabella
+      const tbl = document.createElement('table'),
+            thead = tbl.createTHead(),
+            trh = thead.insertRow(),
+            tbody = tbl.createTBody();
       wds.forEach(d=>{
-        const th=document.createElement('th');
-        th.textContent=d;
-        thead.append(th);
+        const th = document.createElement('th');
+        th.textContent = d;
+        trh.append(th);
       });
 
       let day=1;
       for(let r=0;r<rows;r++){
-        const tr=tbody.insertRow();
+        const tr = tbody.insertRow();
         for(let i=0;i<7;i++){
-          const td=tr.insertCell(), idx=r*7+i;
+          const td = tr.insertCell(), idx = r*7+i;
           if(idx<first||day>dim){
             td.innerHTML='';
           } else {
-            const dd=String(day).padStart(2,'0'),
-                  iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
+            const dd = String(day).padStart(2,'0'),
+                  iso= `${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
             td.className='calendar-cell'; td.dataset.date=iso;
             if(i===6||hols.includes(iso)) td.classList.add('holiday');
             td.innerHTML=`
@@ -119,13 +135,16 @@
           }
         }
       }
+      cont.append(tbl);
 
-      // Slot utente (libero && visibile)
-      const snap=await db.collection('slots').get(),
+      // carica slot utente
+      const snap = await db.collection('slots').get(),
             byDate={};
       snap.forEach(ds=>{
         const s=ds.data();
-        if(s.libero&&s.visibile) (byDate[s.date]||=[]).push(s);
+        if(s.libero&&s.visibile){
+          (byDate[s.date]||=[]).push(s);
+        }
       });
 
       document.querySelectorAll('.calendar-cell').forEach(cell=>{
@@ -154,7 +173,7 @@
       return b;
     }
 
-    // Login modal logic
+    // 4) Login modal
     document.getElementById('login-btn').onclick = ()=>{
       document.getElementById('login-modal').classList.add('active');
     };
@@ -165,7 +184,7 @@
       const u=document.getElementById('username').value.trim(),
             p=document.getElementById('password').value.trim();
       if(!u||!p){ alert('Inserisci credenziali'); return; }
-      const q=await db.collection('users')
+      const q = await db.collection('users')
         .where('username','==',u)
         .where('password','==',p)
         .get();
@@ -176,11 +195,10 @@
       }
     };
 
-    // Avvio
-    window.addEventListener('DOMContentLoaded',()=>{
+    // avvio
+    window.addEventListener('DOMContentLoaded', ()=>{
       renderCalendar(currentMonth);
-      firebase.firestore().collection('slots')
-        .onSnapshot(()=>renderCalendar(currentMonth));
+      db.collection('slots').onSnapshot(()=>renderCalendar(currentMonth));
     });
   </script>
 </body>
