@@ -18,6 +18,19 @@
 
   <div id="loader"><div class="spinner"></div></div>
 
+  <!-- Booking Modal -->
+  <div id="booking-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn">&times;</button>
+      <h3>Prenota Slot</h3>
+      <p>Data: <span id="book-date"></span></p>
+      <p>Ora:  <span id="book-time"></span></p>
+      <input type="text" id="book-name" placeholder="Nome"/><br/>
+      <input type="text" id="book-phone" placeholder="Telefono"/><br/><br/>
+      <button id="book-save" class="btn">Conferma</button>
+    </div>
+  </div>
+
   <!-- Login Modal -->
   <div id="login-modal" class="modal">
     <div class="modal-content">
@@ -33,7 +46,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Init Firebase
+    // Init
     firebase.initializeApp({
       apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain: "prenotazioni-app-87467.firebaseapp.com",
@@ -44,7 +57,7 @@
     });
     const db = firebase.firestore();
 
-    // Calcolo Pasqua & festività per ANNO Y
+    // Pasqua & feste (anno Y)
     function calculateEaster(Y){
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,
@@ -59,11 +72,9 @@
     }
     function getHolidays(Y){
       const pad=n=>String(n).padStart(2,'0'),
-            eas=calculateEaster(Y),
-            em=eas.getMonth()+1, ed=eas.getDate(),
+            eas=calculateEaster(Y), em=eas.getMonth()+1, ed=eas.getDate(),
             pas=`${Y}-${pad(em)}-${pad(ed)}`,
-            ang=new Date(eas);
-      ang.setDate(ed+1);
+            ang=new Date(eas); ang.setDate(ed+1);
       const am=ang.getMonth()+1, ad=ang.getDate(),
             pasq=`${Y}-${pad(am)}-${pad(ad)}`;
       return [
@@ -73,41 +84,39 @@
       ];
     }
 
-    let currentMonth = new Date();
+    let currentMonth = new Date(),
+        bookingId   = null;
 
-    // Render calendario utente
+    // Render utente
     async function renderCalendar(d0){
       currentMonth = d0;
-      const Y = d0.getFullYear(), M = d0.getMonth(),
-            dim = new Date(Y,M+1,0).getDate(),
-            first = (new Date(Y,M,1).getDay()+6)%7,
-            rows = Math.ceil((first+dim)/7),
-            hols = getHolidays(Y),
-            wds = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const Y = d0.getFullYear(), M=d0.getMonth(),
+            dim=new Date(Y,M+1,0).getDate(),
+            first=(new Date(Y,M,1).getDay()+6)%7,
+            rows=Math.ceil((first+dim)/7),
+            hols=getHolidays(Y),
+            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       document.getElementById('loader').classList.add('active');
-      const cont = document.getElementById('calendar-container');
-      cont.innerHTML = '';
+      const cont=document.getElementById('calendar-container');
+      cont.innerHTML='';
 
-      // Header mese
-      const nav = document.createElement('div'); nav.className='calendar-header';
-      let mName = d0.toLocaleString('it-IT',{month:'long'});
-      mName = mName.charAt(0).toUpperCase()+mName.slice(1);
+      // Header
+      const nav=document.createElement('div'); nav.className='calendar-header';
+      let mName=d0.toLocaleString('it-IT',{month:'long'});
+      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
       nav.append(
-        createNav('‹', ()=>renderCalendar(new Date(Y,M-1,1))),
+        createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
         Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
-        createNav('›', ()=>renderCalendar(new Date(Y,M+1,1)))
+        createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
       );
       cont.append(nav);
 
-      // Tabella
-      const tbl = document.createElement('table'),
-            thead = tbl.createTHead(),
-            trh = thead.insertRow(),
-            tbody = tbl.createTBody();
-      wds.forEach(d=>{
-        const th=document.createElement('th'); th.textContent=d; trh.append(th);
-      });
+      // Table
+      const tbl=document.createElement('table'),
+            thead=tbl.createTHead(), trh=thead.insertRow(),
+            tbody=tbl.createTBody();
+      wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; trh.append(th); });
       let day=1;
       for(let r=0;r<rows;r++){
         const tr=tbody.insertRow();
@@ -130,20 +139,25 @@
       }
       cont.append(tbl);
 
-      // Slot utente
+      // Load free & visible slots
       const snap=await db.collection('slots').get(), byDate={};
       snap.forEach(ds=>{
         const s=ds.data();
-        if(s.libero&&s.visibile) (byDate[s.date]||=[]).push(s);
+        if(s.libero&&s.visibile){
+          (byDate[s.date]||=[]).push({id:ds.id,...s});
+        }
       });
       document.querySelectorAll('.calendar-cell').forEach(cell=>{
         const date=cell.dataset.date,
               sc=cell.querySelector('.slots-container'),
               arr=(byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
         arr.slice(0,4).forEach(s=>{
-          const sp=document.createElement('span');
-          sp.className='slot-time'; sp.textContent=s.time;
-          sc.append(sp);
+          const div=document.createElement('div');
+          div.className='slot-time';
+          div.dataset.id=s.id;
+          div.innerHTML=`<span>${s.time}</span>`;
+          div.onclick=()=>openBooking(s.id,date,s.time);
+          sc.append(div);
         });
         if(arr.length>4){
           const link=document.createElement('a');
@@ -162,7 +176,29 @@
       return b;
     }
 
-    // Login modal
+    // Booking
+    function openBooking(id,date,time){
+      bookingId = id;
+      document.getElementById('book-date').textContent = date;
+      document.getElementById('book-time').textContent = time;
+      document.getElementById('book-name').value = '';
+      document.getElementById('book-phone').value = '';
+      document.getElementById('booking-modal').classList.add('active');
+    }
+    document.querySelectorAll('#booking-modal .close-btn').forEach(b=>{
+      b.onclick=()=>b.closest('.modal').classList.remove('active');
+    });
+    document.getElementById('book-save').onclick = async ()=>{
+      const name=document.getElementById('book-name').value.trim(),
+            phone=document.getElementById('book-phone').value.trim();
+      if(!name||!phone){ alert('Nome e telefono obbligatori'); return; }
+      await db.collection('slots').doc(bookingId).update({
+        nome:name, telefono:phone, libero:false
+      });
+      document.getElementById('booking-modal').classList.remove('active');
+    };
+
+    // Login → admin.html
     document.getElementById('login-btn').onclick = ()=>{
       document.getElementById('login-modal').classList.add('active');
     };
@@ -173,7 +209,7 @@
       const u=document.getElementById('username').value.trim(),
             p=document.getElementById('password').value.trim();
       if(!u||!p){ alert('Inserisci credenziali'); return; }
-      const q=await db.collection('users')
+      const q = await db.collection('users')
         .where('username','==',u)
         .where('password','==',p)
         .get();
