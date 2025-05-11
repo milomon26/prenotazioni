@@ -59,10 +59,14 @@ td.calendar-cell.holiday .day-number { color:#d32f2f }
   padding:4px 8px; display:flex; justify-content:space-between;
   align-items:center; width:100%; box-sizing:border-box;
 }
-.slot-time .trash-btn {
+.slot-time .trash-btn,
+.slot-time .vis-btn {
   background:none; border:none; font-size:1rem;
-  color:#d32f2f; cursor:pointer;
+  cursor:pointer;
 }
+.slot-time .vis-btn { margin-left:8px }
+.slot-time .trash-btn { color:#d32f2f }
+.slot-time .vis-btn { color:#006064 }
 
 .more-link {
   display:inline-block; margin-top:4px;
@@ -103,6 +107,12 @@ td.calendar-cell.holiday .day-number { color:#d32f2f }
 .login-card input {
   width:100%; padding:10px; margin-bottom:15px;
   border:2px solid #4dd0e1; border-radius:4px; font-size:1rem;
+}
+
+/* Booking Modal (index) */
+#booking-modal .modal-content input {
+  width:100%; padding:8px; margin-bottom:12px;
+  border:2px solid #4dd0e1; border-radius:4px;
 }
 
 /* Wizard */
