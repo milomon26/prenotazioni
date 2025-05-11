@@ -99,7 +99,7 @@
     });
     const db = firebase.firestore();
 
-    // Pasqua & festività per anno Y
+    // Pasqua & festività per ANNO Y
     function calculateEaster(Y){
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,
@@ -139,14 +139,13 @@
             rows = Math.ceil((first+dim)/7),
             hols = getHolidays(Y),
             wds = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
-      document.getElementById('loader').classList.add('active');
 
+      document.getElementById('loader').classList.add('active');
       const cont = document.getElementById('calendar-container');
       cont.innerHTML = '';
 
       // Header mese
-      const nav = document.createElement('div');
-      nav.className = 'calendar-header';
+      const nav = document.createElement('div'); nav.className='calendar-header';
       let mName = d0.toLocaleString('it-IT',{month:'long'});
       mName = mName.charAt(0).toUpperCase()+mName.slice(1);
       nav.append(
@@ -162,9 +161,7 @@
             trh = thead.insertRow(),
             tbody = tbl.createTBody();
       wds.forEach(d=>{
-        const th = document.createElement('th');
-        th.textContent = d;
-        trh.append(th);
+        const th=document.createElement('th'); th.textContent=d; trh.append(th);
       });
       let day=1;
       for(let r=0;r<rows;r++){
@@ -189,7 +186,7 @@
       cont.append(tbl);
 
       // Carica slot
-      const snap = await db.collection('slots').get(), byDate={};
+      const snap=await db.collection('slots').get(), byDate={};
       snap.forEach(ds=>{
         const s=ds.data();
         (byDate[s.date]||=[]).push({id:ds.id,...s});
@@ -203,10 +200,7 @@
         arr.slice(0,4).forEach(s=>{
           const div=document.createElement('div');
           div.className='slot-time';
-          div.innerHTML=`
-            <span>${s.time}</span>
-            <button class="trash-btn" onclick="deleteSlot('${s.id}',event)">×</button>
-          `;
+          div.innerHTML=`<span>${s.time}</span><button class="trash-btn" onclick="deleteSlot('${s.id}',event)">×</button>`;
           sc.append(div);
         });
         if(arr.length>4){
@@ -227,7 +221,7 @@
       return b;
     }
 
-    // Delete slot & confirm
+    // Delete slot + Confirm
     window.deleteSlot=(id,e)=>{
       e.stopPropagation();
       window.pendingId=id;
@@ -318,8 +312,7 @@
         const row=wl.querySelector(`button[data-day="${wizardCtx.giorno}"]`)
                     .closest('.weekday-row');
         row.querySelector('.time-summary')?.remove();
-        const cont=document.createElement('div');
-        cont.className='time-summary';
+        const cont=document.createElement('div'); cont.className='time-summary';
         scelti.forEach(hour=>{
           const pill=document.createElement('span'); pill.className='time-pill';
           pill.textContent=hour;
