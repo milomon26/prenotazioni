@@ -1,167 +1,174 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Calendario Admin</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Calendario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<header class="header">
-  <button onclick="window.location='index.html'" class="btn">Vista Utente</button>
-</header>
-
-<main>
-  <div id="calendar-container"></div>
-</main>
-
-<div id="loader"><div class="spinner"></div></div>
-
-<!-- Modale modifica slot -->
-<div id="edit-modal" class="modal">
-  <div class="modal-content">
-    <button class="close-btn">&times;</button>
-    <h3>Modifica Slot</h3>
-    <p>Data: <span id="edit-date"></span></p>
-    <label>Ora: <input id="edit-time" type="text"/></label><br/><br/>
-    <label>Nome: <input id="edit-name" type="text"/></label><br/>
-    <label>Telefono: <input id="edit-phone" type="text"/></label><br/><br/>
-    <button id="edit-save" class="btn">Salva</button>
+  <div class="header">
+    <button class="btn" onclick="logout()">Logout</button>
   </div>
-</div>
 
-<!-- Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-firebase.initializeApp({
-  apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
-  authDomain: "prenotazioni-app-87467.firebaseapp.com",
-  projectId: "prenotazioni-app-87467"
-});
-const db = firebase.firestore();
+  <div class="calendar-header">
+    <button class="btn-nav" onclick="changeMonth(-1)">❮</button>
+    <h2 id="monthYear"></h2>
+    <button class="btn-nav" onclick="changeMonth(1)">❯</button>
+  </div>
 
-let currentMonth = new Date(), editSlotId = null;
+  <table id="calendar">
+    <thead>
+      <tr>
+        <th>Lunedì</th>
+        <th>Martedì</th>
+        <th>Mercoledì</th>
+        <th>Giovedì</th>
+        <th>Venerdì</th>
+        <th>Sabato</th>
+        <th>Domenica</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-async function renderCalendar(d0) {
-  currentMonth = d0;
-  const Y = d0.getFullYear(), M=d0.getMonth(),
-        dim=new Date(Y,M+1,0).getDate(),
-        first=(new Date(Y,M,1).getDay()+6)%7,
-        rows=Math.ceil((first+dim)/7),
-        wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+  <div class="modal" id="edit-modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="document.getElementById('edit-modal').classList.remove('active')">✖</button>
+      <h3>Dettagli Slot</h3>
+      <p><strong>Data:</strong> <span id="edit-date"></span></p>
+      <label>Ora: <input id="edit-time" readonly></label>
+      <label>Nome: <input id="edit-name" readonly></label>
+      <label>Telefono: <input id="edit-phone" readonly></label>
+    </div>
+  </div>
 
-  document.getElementById('loader').classList.add('active');
-  const cont=document.getElementById('calendar-container');
-  cont.innerHTML='';
+  <script>
+    const firebaseConfig = {
+      // inserisci qui la tua configurazione Firebase
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  const nav=document.createElement('div'); nav.className='calendar-header';
-  let mName=d0.toLocaleString('it-IT',{month:'long'});
-  mName=mName.charAt(0).toUpperCase()+mName.slice(1);
-  nav.append(
-    createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
-    Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
-    createNav('›',()=>renderCalendar(new Date(Y,M+1,1)))
-  );
-  cont.append(nav);
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
 
-  const tbl=document.createElement('table'),
-        thead=tbl.createTHead(), trh=thead.insertRow(),
-        tbody=tbl.createTBody();
-  wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; trh.append(th); });
-  let day=1;
-  for(let r=0;r<rows;r++){
-    const tr=tbody.insertRow();
-    for(let i=0;i<7;i++){
-      const td=tr.insertCell(), idx=r*7+i;
-      if(idx<first||day>dim){ td.innerHTML=''; }
-      else {
-        const dd=String(day).padStart(2,'0'),
-              iso=`${Y}-${String(M+1).padStart(2,'0')}-${dd}`;
-        td.className='calendar-cell'; td.dataset.date=iso;
-        td.innerHTML=`<div class="day-number">${dd}</div><div class="slots-container"></div>`;
-        day++;
+    function logout() {
+      window.location.href = 'login.html';
+    }
+
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      } else if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function renderCalendar(month, year) {
+      const tbody = document.querySelector("#calendar tbody");
+      tbody.innerHTML = "";
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthYear = document.getElementById("monthYear");
+      monthYear.textContent = new Date(year, month).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement("tr");
+
+        for (let j = 1; j <= 7; j++) {
+          const cell = document.createElement("td");
+          cell.classList.add("calendar-cell");
+          if (i === 0 && j < (firstDay || 7)) {
+            row.appendChild(cell);
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            const dayNumber = document.createElement("div");
+            dayNumber.className = "day-number";
+            dayNumber.textContent = String(date).padStart(2, '0');
+            cell.appendChild(dayNumber);
+
+            const dateStr = \`\${year}-\${String(month + 1).padStart(2, '0')}-\${String(date).padStart(2, '0')}\`;
+            const slotsContainer = document.createElement("div");
+            slotsContainer.className = "slots-container";
+            cell.appendChild(slotsContainer);
+
+            db.collection("slots")
+              .where("date", "==", dateStr)
+              .orderBy("time")
+              .get()
+              .then(snapshot => {
+                const arr = [];
+                snapshot.forEach(doc => {
+                  const data = doc.data();
+                  data.id = doc.id;
+                  arr.push(data);
+                });
+
+                arr.forEach(s => {
+                  const div = document.createElement("div");
+                  div.className = "slot-time";
+                  if (s.occupato) div.style.background = "#ffcdd2";
+                  div.innerHTML = \`
+                    <span class="slot-click" style="cursor:pointer">\${s.time}</span>
+                    <span>
+                      <button class="vis-btn" title="Toggle visibilità">\${s.visibile ? '👁️' : '🙈'}</button>
+                      <button class="trash-btn" title="Elimina">🗑️</button>
+                    </span>
+                  \`;
+
+                  div.querySelector(".slot-click").onclick = () => showDetailsModal(s);
+                  div.querySelector(".vis-btn").onclick = () => toggleVisibility(s.id, s.visibile);
+                  div.querySelector(".trash-btn").onclick = () => deleteSlot(s.id);
+                  slotsContainer.appendChild(div);
+                });
+              });
+
+            date++;
+            row.appendChild(cell);
+          }
+        }
+
+        tbody.appendChild(row);
       }
     }
-  }
-  cont.append(tbl);
 
-  const snap=await db.collection('slots').get(), byDate={};
-  snap.forEach(ds=>{
-    const s=ds.data();
-    (byDate[s.date]||=[]).push({id:ds.id,...s});
-  });
-  document.querySelectorAll('.calendar-cell').forEach(cell=>{
-    const date=cell.dataset.date,
-          sc=cell.querySelector('.slots-container'),
-          arr=(byDate[date]||[]).sort((a,b)=>a.time.localeCompare(b.time));
-    arr.forEach(s=>{
-      const div=document.createElement('div');
-      div.className='slot-time';
-      div.innerHTML=`
-        <span class="slot-click" style="cursor:pointer">${s.time}</span>
-        <span>
-          <button class="vis-btn" title="Toggle visibilità"> ${s.visibile ? '👁️' : '🙈'} </button>
-          <button class="trash-btn" title="Elimina">🗑️</button>
-        </span>
-      `;
-      div.querySelector('.slot-click').onclick=()=>openEdit(s.id, s);
-      div.querySelector('.vis-btn').onclick=()=>toggleVisibility(s.id, s.visibile);
-      div.querySelector('.trash-btn').onclick=()=>deleteSlot(s.id);
-      sc.append(div);
-    });
-  });
-  document.getElementById('loader').classList.remove('active');
-}
+    function toggleVisibility(id, current) {
+      db.collection("slots").doc(id).update({ visibile: !current }).then(() => {
+        renderCalendar(currentMonth, currentYear);
+      });
+    }
 
-function createNav(txt,fn){
-  const b=document.createElement('button');
-  b.className='btn-nav'; b.textContent=txt; b.onclick=fn;
-  return b;
-}
+    function deleteSlot(id) {
+      if (confirm("Eliminare questo slot?")) {
+        db.collection("slots").doc(id).delete().then(() => {
+          renderCalendar(currentMonth, currentYear);
+        });
+      }
+    }
 
-// Edit modal
-function openEdit(id, s){
-  editSlotId = id;
-  document.getElementById('edit-date').textContent = s.date;
-  document.getElementById('edit-time').value = s.time;
-  document.getElementById('edit-name').value = s.nome || '';
-  document.getElementById('edit-phone').value = s.telefono || '';
-  document.getElementById('edit-modal').classList.add('active');
-}
-document.querySelector('#edit-modal .close-btn').onclick = () => {
-  document.getElementById('edit-modal').classList.remove('active');
-};
-document.getElementById('edit-save').onclick = async ()=>{
-  const t=document.getElementById('edit-time').value.trim(),
-        n=document.getElementById('edit-name').value.trim(),
-        p=document.getElementById('edit-phone').value.trim();
-  await db.collection('slots').doc(editSlotId).update({
-    time: t, nome: n, telefono: p
-  });
-  document.getElementById('edit-modal').classList.remove('active');
-};
+    function showDetailsModal(s) {
+      document.getElementById("edit-date").textContent = s.date;
+      document.getElementById("edit-time").value = s.time;
+      document.getElementById("edit-name").value = s.nome || '';
+      document.getElementById("edit-phone").value = s.telefono || '';
+      document.getElementById("edit-modal").classList.add("active");
+    }
 
-// Toggle visibility
-async function toggleVisibility(id, current){
-  await db.collection('slots').doc(id).update({
-    visibile: !current
-  });
-}
-
-// Delete
-async function deleteSlot(id){
-  if(confirm('Sei sicuro di voler eliminare lo slot?')){
-    await db.collection('slots').doc(id).delete();
-  }
-}
-
-window.addEventListener('DOMContentLoaded',()=>{
-  renderCalendar(currentMonth);
-  db.collection('slots').onSnapshot(()=>renderCalendar(currentMonth));
-});
-</script>
+    renderCalendar(currentMonth, currentYear);
+  </script>
 
 </body>
 </html>
