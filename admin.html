@@ -1,141 +1,183 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Gestione Slot</title>
-  <style>
-    body { background:#e0f7fa; font-family:'Poppins',sans-serif; margin:0; padding:0; color:#006064 }
-    .calendar { display:flex; flex-wrap:wrap; gap:20px; padding:20px }
-    .day { background:#b2ebf2; padding:10px; border-radius:8px; flex:1 1 150px }
-    .day h3 { margin:0 0 10px 0; }
-    .slot-time {
-      background:#c8e6c9; border-radius:4px; padding:4px 8px;
-      display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;
-      cursor:pointer;
-    }
-    .slot-time.occupied { background:#ffcdd2; }
-    .slot-time button {
-      background:none; border:none; cursor:pointer; font-size:1.1rem;
-    }
-
-    /* Modal */
-    .modal {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.3); display:flex;
-      justify-content:center; align-items:center;
-      opacity:0; pointer-events:none; transition:opacity 0.2s;
-    }
-    .modal.active {
-      opacity:1; pointer-events:auto;
-    }
-    .modal-content {
-      background:#ffffff; padding:20px; border-radius:8px;
-      max-width:400px; width:90%; position:relative;
-    }
-    .modal-content h2 { margin-top:0; }
-    .close-btn {
-      position:absolute; top:10px; right:10px;
-      background:none; border:none; font-size:1.2rem; cursor:pointer;
-    }
-  </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin - Prenotazioni</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
-  <div class="calendar" id="calendar"></div>
+  <header class="header">
+    <button id="logout-btn" class="btn">Logout</button>
+  </header>
 
-  <!-- Modal Dettaglio -->
-  <div class="modal" id="detail-modal">
+  <main>
+    <div id="calendar-container"></div>
+  </main>
+
+  <div id="loader"><div class="spinner"></div></div>
+
+  <!-- Dettaglio slot -->
+  <div id="slot-modal" class="modal">
     <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">✖️</button>
-      <h2>Dettaglio Slot</h2>
-      <div id="modal-details"></div>
+      <button class="close-btn">&times;</button>
+      <h3>Dettaglio Slot</h3>
+      <p id="slot-info"></p>
     </div>
   </div>
 
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Simulazione dati Firebase
-    const slotData = {
-      "2025-05-02": [
-        { ora: "08:00", visibile: true, occupato: true, utente: "Mario Rossi" },
-        { ora: "09:00", visibile: false, occupato: false },
-        { ora: "10:00", visibile: true, occupato: false }
-      ],
-      "2025-05-03": [
-        { ora: "07:00", visibile: true, occupato: true, utente: "Luca Bianchi" },
-        { ora: "08:00", visibile: true, occupato: false }
-      ]
+    firebase.initializeApp({
+      apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
+      authDomain: "prenotazioni-app-87467.firebaseapp.com",
+      projectId: "prenotazioni-app-87467",
+    });
+    const db = firebase.firestore();
+
+    const loader = document.getElementById("loader");
+    const modal = document.getElementById("slot-modal");
+    const info = document.getElementById("slot-info");
+
+    function calculateEaster(Y) {
+      const a = Y % 19, b = Math.floor(Y / 100), c = Y % 100,
+            d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+            g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+            i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7,
+            m = Math.floor((a + 11 * h + 22 * l) / 451),
+            mo = Math.floor((h + l - 7 * m + 114) / 31),
+            da = ((h + l - 7 * m + 114) % 31) + 1;
+      return new Date(Y, mo - 1, da);
+    }
+
+    function getHolidays(Y) {
+      const pad = n => String(n).padStart(2, '0'),
+            eas = calculateEaster(Y),
+            ang = new Date(eas); ang.setDate(eas.getDate() + 1),
+            dates = [
+              eas, ang,
+              new Date(Y, 0, 1), new Date(Y, 0, 6),
+              new Date(Y, 3, 25), new Date(Y, 4, 1),
+              new Date(Y, 5, 2), new Date(Y, 5, 29),
+              new Date(Y, 7, 15), new Date(Y, 10, 1),
+              new Date(Y, 11, 8), new Date(Y, 11, 25), new Date(Y, 11, 26)
+            ];
+      return dates.map(d => `${Y}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+    }
+
+    async function renderCalendar(d = new Date()) {
+      const Y = d.getFullYear(), M = d.getMonth(),
+            firstDay = new Date(Y, M, 1).getDay(),
+            daysInMonth = new Date(Y, M + 1, 0).getDate(),
+            startDay = (firstDay + 6) % 7,
+            weeks = Math.ceil((startDay + daysInMonth) / 7),
+            holidays = getHolidays(Y),
+            container = document.getElementById("calendar-container");
+
+      loader.classList.add("active");
+      container.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "calendar-header";
+      const monthName = d.toLocaleString("it-IT", { month: "long" });
+      header.innerHTML = `
+        <button class="btn-nav" onclick="renderCalendar(new Date(${Y}, ${M}-1, 1))">‹</button>
+        <h2>${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${Y}</h2>
+        <button class="btn-nav" onclick="renderCalendar(new Date(${Y}, ${M}+1, 1))">›</button>
+      `;
+      container.appendChild(header);
+
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead><tr>
+          <th>Lunedì</th><th>Martedì</th><th>Mercoledì</th><th>Giovedì</th>
+          <th>Venerdì</th><th>Sabato</th><th>Domenica</th>
+        </tr></thead><tbody></tbody>
+      `;
+      container.appendChild(table);
+      const tbody = table.querySelector("tbody");
+
+      let day = 1;
+      for (let i = 0; i < weeks; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+          const cell = document.createElement("td");
+          if (i === 0 && j < startDay || day > daysInMonth) {
+            cell.innerHTML = "";
+          } else {
+            const dateStr = `${Y}-${String(M+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+            cell.className = "calendar-cell";
+            if (j === 6 || holidays.includes(dateStr)) cell.classList.add("holiday");
+            cell.dataset.date = dateStr;
+            cell.innerHTML = `<div class="day-number">${day}</div><div class="slots-container"></div>`;
+            day++;
+          }
+          row.appendChild(cell);
+        }
+        tbody.appendChild(row);
+      }
+
+      const snapshot = await db.collection("slots").get();
+      const slots = {};
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        if (!slots[s.date]) slots[s.date] = [];
+        slots[s.date].push({ id: doc.id, ...s });
+      });
+
+      document.querySelectorAll(".calendar-cell").forEach(cell => {
+        const date = cell.dataset.date;
+        const container = cell.querySelector(".slots-container");
+        const slotList = (slots[date] || []).sort((a,b)=>a.time.localeCompare(b.time));
+        slotList.forEach(slot => {
+          const div = document.createElement("div");
+          div.className = "slot-time";
+          if (!slot.libero) div.style.background = "#ffcdd2"; // rosso chiaro
+          div.innerHTML = `
+            <span>${slot.time}</span>
+            <button class="vis-btn">${slot.visibile ? "👁️" : "🙈"}</button>
+            <button class="trash-btn">🗑️</button>
+          `;
+          div.onclick = (e) => {
+            e.stopPropagation();
+            if (e.target.classList.contains("vis-btn")) {
+              db.collection("slots").doc(slot.id).update({ visibile: !slot.visibile });
+            } else if (e.target.classList.contains("trash-btn")) {
+              if (confirm("Eliminare questo slot?")) db.collection("slots").doc(slot.id).delete();
+            } else {
+              info.innerHTML = `
+                <strong>Data:</strong> ${slot.date}<br/>
+                <strong>Ora:</strong> ${slot.time}<br/>
+                <strong>Nome:</strong> ${slot.nome || "-"}<br/>
+                <strong>Telefono:</strong> ${slot.telefono || "-"}<br/>
+                <strong>Visibile:</strong> ${slot.visibile ? "Sì" : "No"}<br/>
+                <strong>Libero:</strong> ${slot.libero ? "Sì" : "No"}<br/>
+              `;
+              modal.classList.add("active");
+            }
+          };
+          container.appendChild(div);
+        });
+      });
+
+      loader.classList.remove("active");
+    }
+
+    document.querySelector("#slot-modal .close-btn").onclick = () => {
+      modal.classList.remove("active");
     };
 
-    const calendarEl = document.getElementById("calendar");
+    document.getElementById("logout-btn").onclick = () => {
+      window.location = "index.html";
+    };
 
-    function renderCalendar() {
-      calendarEl.innerHTML = "";
-      for (const [date, slots] of Object.entries(slotData)) {
-        const dayEl = document.createElement("div");
-        dayEl.className = "day";
-        const d = new Date(date);
-        dayEl.innerHTML = `<h3>${d.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long" })}</h3>`;
-
-        slots.forEach((slot, idx) => {
-          const slotEl = document.createElement("div");
-          slotEl.className = "slot-time";
-          if (slot.occupato) slotEl.classList.add("occupied");
-
-          const timeText = document.createElement("span");
-          timeText.textContent = slot.ora;
-
-          // Visibilità toggle
-          const eyeBtn = document.createElement("button");
-          eyeBtn.textContent = slot.visibile ? "👁️" : "🙈";
-          eyeBtn.onclick = (e) => {
-            e.stopPropagation();
-            slot.visibile = !slot.visibile;
-            renderCalendar();
-          };
-
-          // Cancella slot
-          const trashBtn = document.createElement("button");
-          trashBtn.textContent = "🗑️";
-          trashBtn.onclick = (e) => {
-            e.stopPropagation();
-            slotData[date].splice(idx, 1);
-            renderCalendar();
-          };
-
-          slotEl.appendChild(timeText);
-          slotEl.appendChild(eyeBtn);
-          slotEl.appendChild(trashBtn);
-
-          // Click per aprire dettaglio se occupato
-          slotEl.onclick = () => {
-            if (slot.occupato) showModal(slot, date);
-          };
-
-          dayEl.appendChild(slotEl);
-        });
-
-        calendarEl.appendChild(dayEl);
-      }
-    }
-
-    function showModal(slot, date) {
-      const modal = document.getElementById("detail-modal");
-      const content = document.getElementById("modal-details");
-      content.innerHTML = `
-        <p><strong>Data:</strong> ${date}</p>
-        <p><strong>Ora:</strong> ${slot.ora}</p>
-        <p><strong>Occupato:</strong> ${slot.occupato ? "Sì" : "No"}</p>
-        ${slot.utente ? `<p><strong>Utente:</strong> ${slot.utente}</p>` : ""}
-      `;
-      modal.classList.add("active");
-    }
-
-    function closeModal() {
-      document.getElementById("detail-modal").classList.remove("active");
-    }
-
-    renderCalendar();
+    window.addEventListener("DOMContentLoaded", () => {
+      renderCalendar();
+      db.collection("slots").onSnapshot(() => renderCalendar());
+    });
   </script>
 </body>
 </html>
