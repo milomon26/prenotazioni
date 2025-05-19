@@ -42,22 +42,17 @@
     </div>
   </div>
 
-  <!-- Firebase compat -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    // Init
     firebase.initializeApp({
       apiKey: "AIzaSyBTc-IEX2IlfQwL2n-r-lbWepxys0dEco",
       authDomain: "prenotazioni-app-87467.firebaseapp.com",
       projectId: "prenotazioni-app-87467",
-      storageBucket: "prenotazioni-app-87467.appspot.com",
-      messagingSenderId: "322391103742",
-      appId: "1:322391103742:web:6f74e033b57281bdaaedaf"
     });
     const db = firebase.firestore();
 
-    // Pasqua & feste (anno Y)
     function calculateEaster(Y){
       const a=Y%19,b=Math.floor(Y/100),c=Y%100,
             d=Math.floor(b/4),e=b%4,
@@ -84,27 +79,24 @@
       ];
     }
 
-    let currentMonth = new Date(),
-        bookingId   = null;
+    let currentMonth = new Date(), bookingId = null;
 
-    // Render utente
     async function renderCalendar(d0){
       currentMonth = d0;
-      const Y = d0.getFullYear(), M=d0.getMonth(),
-            dim=new Date(Y,M+1,0).getDate(),
-            first=(new Date(Y,M,1).getDay()+6)%7,
-            rows=Math.ceil((first+dim)/7),
-            hols=getHolidays(Y),
-            wds=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+      const Y = d0.getFullYear(), M = d0.getMonth(),
+            dim = new Date(Y, M+1, 0).getDate(),
+            first = (new Date(Y, M, 1).getDay() + 6) % 7,
+            rows = Math.ceil((first + dim) / 7),
+            hols = getHolidays(Y),
+            wds = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
       document.getElementById('loader').classList.add('active');
-      const cont=document.getElementById('calendar-container');
-      cont.innerHTML='';
+      const cont = document.getElementById('calendar-container');
+      cont.innerHTML = '';
 
-      // Header
-      const nav=document.createElement('div'); nav.className='calendar-header';
-      let mName=d0.toLocaleString('it-IT',{month:'long'});
-      mName=mName.charAt(0).toUpperCase()+mName.slice(1);
+      const nav = document.createElement('div'); nav.className = 'calendar-header';
+      let mName = d0.toLocaleString('it-IT',{month:'long'});
+      mName = mName.charAt(0).toUpperCase() + mName.slice(1);
       nav.append(
         createNav('‹',()=>renderCalendar(new Date(Y,M-1,1))),
         Object.assign(document.createElement('h2'),{textContent:`${mName} ${Y}`}),
@@ -112,11 +104,11 @@
       );
       cont.append(nav);
 
-      // Table
       const tbl=document.createElement('table'),
             thead=tbl.createTHead(), trh=thead.insertRow(),
             tbody=tbl.createTBody();
       wds.forEach(d=>{ const th=document.createElement('th'); th.textContent=d; trh.append(th); });
+
       let day=1;
       for(let r=0;r<rows;r++){
         const tr=tbody.insertRow();
@@ -139,8 +131,7 @@
       }
       cont.append(tbl);
 
-      // Load free & visible slots
-      const snap=await db.collection('slots').get(), byDate={};
+      const snap = await db.collection('slots').get(), byDate = {};
       snap.forEach(ds=>{
         const s=ds.data();
         if(s.libero&&s.visibile){
@@ -176,7 +167,6 @@
       return b;
     }
 
-    // Booking
     function openBooking(id,date,time){
       bookingId = id;
       document.getElementById('book-date').textContent = date;
@@ -185,9 +175,11 @@
       document.getElementById('book-phone').value = '';
       document.getElementById('booking-modal').classList.add('active');
     }
+
     document.querySelectorAll('#booking-modal .close-btn').forEach(b=>{
       b.onclick=()=>b.closest('.modal').classList.remove('active');
     });
+
     document.getElementById('book-save').onclick = async ()=>{
       const name=document.getElementById('book-name').value.trim(),
             phone=document.getElementById('book-phone').value.trim();
@@ -196,9 +188,39 @@
         nome:name, telefono:phone, libero:false
       });
       document.getElementById('booking-modal').classList.remove('active');
+
+      // Download .ics evento
+      const date=document.getElementById('book-date').textContent;
+      const time=document.getElementById('book-time').textContent;
+      const [yy,mm,dd] = date.split("-");
+      const [hh,mi] = time.split(":");
+      const dtstart = `${yy}${mm}${dd}T${hh}${mi}00`;
+      const dtend   = `${yy}${mm}${dd}T${String(parseInt(hh)+1).padStart(2,'0')}${mi}00`;
+
+      const icsContent = `
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//MyApp//EN
+BEGIN:VEVENT
+UID:${Date.now()}@prenotazioni.com
+DTSTAMP:${dtstart}Z
+DTSTART:${dtstart}Z
+DTEND:${dtend}Z
+SUMMARY:Prenotazione
+DESCRIPTION:Prenotazione per ${name}
+LOCATION:Online
+END:VEVENT
+END:VCALENDAR`.trim();
+
+      const blob = new Blob([icsContent], { type: 'text/calendar' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `prenotazione-${date}-${time}.ics`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     };
 
-    // Login → admin.html
     document.getElementById('login-btn').onclick = ()=>{
       document.getElementById('login-modal').classList.add('active');
     };
@@ -220,7 +242,6 @@
       }
     };
 
-    // Avvio
     window.addEventListener('DOMContentLoaded',()=>{
       renderCalendar(currentMonth);
       db.collection('slots').onSnapshot(()=>renderCalendar(currentMonth));
